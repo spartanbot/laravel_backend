@@ -40,10 +40,11 @@ return [
             'driver' => 'session',
             'provider' => 'users',
         ],
-        'api' => [
+        'api'=>[
             'driver' => 'jwt',
             'provider' => 'users',
         ],
+       
     ],
 
     /*
@@ -73,6 +74,7 @@ return [
         //     'driver' => 'database',
         //     'table' => 'users',
         // ],
+        
     ],
 
     /*
@@ -97,6 +99,7 @@ return [
             'expire' => 60,
             'throttle' => 60,
         ],
+         
     ],
 
     /*

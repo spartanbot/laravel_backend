@@ -15,14 +15,17 @@ class CreateUsers extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->string('user_login');
+            $table->string('full_name');
+            $table->string('user_name');
             $table->string('user_email')->unique();
             $table->string('password');
+            $table->string('location');
+            $table->string('preferred_language');
+            $table->string('i_am_a');
             $table->string('api_token', 80)->unique()
                         ->nullable()
                         ->default(null);
-            $table->string('display_name');
-            $table->integer('user_status');
+            $table->enum('user_status', array('1','0'))->default('1');
             $table->timestamps();
         });
     }

@@ -3,7 +3,19 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserAuth;
-use App\Http\Controllers\posts;
+use App\Http\Controllers\ResourseController;
+use App\Http\Controllers\BasicInformationController;
+use App\Http\Controllers\InstructorDashboardController;
+use App\Http\Controllers\SellerDashboardController;
+use App\Http\Controllers\UserDashboardController;
+use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\VerifyRegisterUserController;
+use App\Http\Controllers\ResetPasswordController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\LanguageController;
+use App\Http\Controllers\CourseController;
+
+
 
 /*
 |--------------------------------------------------------------------------
@@ -19,18 +31,160 @@ use App\Http\Controllers\posts;
 // Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 //     return $request->user();
 // });
-Route::post('/login', [UserAuth::class,'login']);
-Route::post('/register',[UserAuth::class,'register']);
-// Route::group(['middleware' => 'api','prefix' => 'auth'], function ($router) {
-// });
-Route::group(['middleware' => ['jwt.verify']], function() {
-       Route::post('/dummy',[posts::class,'dummy']);
-       Route::post('/logout',[UserAuth::class,'logout']);
-       //Route::get('logout', [ApiController::class, 'logout']);
-       // Route::get('get_user', [ApiController::class, 'get_user']);
-       // Route::get('products', [ProductController::class, 'index']);
-       // Route::get('products/{id}', [ProductController::class, 'show']);
-       // Route::post('create', [ProductController::class, 'store']);
-       // Route::put('update/{product}',  [ProductController::class, 'update']);
-       // Route::delete('delete/{product}',  [ProductController::class, 'destroy']);
-   });
+
+// // Here admin route
+ 
+
+
+Route::post('/user_register', [UserAuth::class,'register']);
+Route::post('/user_login', [UserAuth::class,'login']);
+
+Route::get('auth/google', [UserAuth::class, 'redirectToGoogle']);
+Route::get('callback/google', [UserAuth::class, 'handleCallback']);
+
+//Route::get('/user/verify/{token}', [UserAuth::class,'verify_user'])->name('verify');
+
+// Route::get('/user/verify/{token}', [VerifyRegisterUserController::class,'verifyUser']);
+
+// Route::post('forgot-password', [ResetPasswordController::class, 'forgot_password']);
+// Route::post('reset-password/{token}', [ResetPasswordController::class, 'reset_assword']);
+
+Route::post('/forgot_password', [UserAuth::class, 'forgot_password']);
+Route::post('/reset_password', [UserAuth::class, 'reset_assword']);
+
+Route::group(['middleware' => 'auth:api'], function () {
+
+Route::get('/logout', [UserAuth::class, 'logout']);
+
+
+
+/******************************************************************
+****************************************************
+route basic information related****************************************
+**********************************************************************************/
+
+Route::post('/basic_create', 
+    [BasicInformationController::class,'basicCreate']);
+Route::post('/basic_edit/{id}', 
+    [BasicInformationController::class,'basicEdit']);
+Route::post('/basic_update', 
+    [BasicInformationController::class,'basicUpdate']);
+Route::post('/basic_delete/{id}', 
+    [BasicInformationController::class,'basicDelete']);
+Route::get('/all_info', 
+    [BasicInformationController::class,'allInfo']);
+
+/**********************************************************
+*****************************************************
+*******route instructor related*****************************************
+*********************************************************************************/
+    
+   Route::post('/create_instruct', 
+    [InstructorDashboardController::class,'instruct_create']);
+   Route::post('/edit_instruct/{id}', 
+    [InstructorDashboardController::class,'instrct_edit']);
+   Route::post('/update_instruct', 
+    [InstructorDashboardController::class,'instrct_update']);
+   Route::post('/delete_instruct/{id}', 
+    [InstructorDashboardController::class,'instrct_delete']);
+   Route::get('/all_instructor', 
+    [InstructorDashboardController::class,'getAllInscrtuct']);
+
+   /**********************************************************
+   ***************************************************
+   *********route sellers related*************************************************
+   *************************************************************************/
+
+
+Route::post('/create_seller', 
+    [SellerDashboardController::class,'seller_create']);
+Route::post('/update_seller', 
+    [SellerDashboardController::class,'seller_update']);
+Route::post('/edit_seller/{id}', 
+    [SellerDashboardController::class,'seller_edit']);
+Route::post('/delete_seller/{id}', 
+    [SellerDashboardController::class,'seller_delete']);
+Route::get('/all_sellers', 
+    [SellerDashboardController::class,'allSeller']);
+    
+ /******************************************************************************
+ ****************************************route Category info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/create_category', 
+    [CategoryController::class,'createCategory']);
+Route::post('/edit_category',  
+    [CategoryController::class,'editCategory']);
+Route::post('/update_category',  
+    [CategoryController::class,'updateCategory']);
+Route::get('/all_category',  
+    [CategoryController::class,'fetchAllCategory']);
+    
+         /******************************************************************************
+ ****************************************route Language info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/add_language', 
+[LanguageController::class,'addLanguage']);
+Route::post('/edit_language',  
+[LanguageController::class,'editLanguage']);
+Route::post('/update_language',  
+[LanguageController::class,'updateLanguage']);
+Route::get('/all_language',  
+[LanguageController::class,'fetchAllLanguage']);
+
+/******************************************************************************
+ ****************************************route course info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/create_course', 
+[CourseController::class,'createCourse']);
+Route::post('/edit_course', 
+[CourseController::class,'editCourse']);
+Route::post('/update_course', 
+[CourseController::class,'updateCourse']);
+Route::post('/remove_content', 
+[CourseController::class,'removeContent']);
+Route::get('/unpublish_course', 
+[CourseController::class,'fetchUnpublishCourse']);
+Route::post('/update_course_publish_status', 
+[CourseController::class,'updatePublishStatus']);
+
+
+ /******************************************************************************
+ ****************************************route user basic info related************
+ *********************************************************************************
+ *****************************/
+ 
+ 
+ Route::post('/userinfo_create', 
+    [UserDashboardController::class,'createUserinfo']);
+Route::post('/userinfo_update', 
+    [UserDashboardController::class,'updateUserinfo']);
+Route::post('/userinfo_edit/{id}', 
+    [UserDashboardController::class,'editUserinfo']);
+Route::post('/userinfo_delete/{id}', 
+    [UserDashboardController::class,'deleteUserinfo']);
+Route::get('/all_userinfo', 
+    [UserDashboardController::class,'getAllUserinfo']);
+
+/*****************************************************************************************
+*****************************route Payment deatils****************************************
+**********************************************************************************/
+
+Route::post('/payment_create', 
+    [PaymentController::class,'createPayment']);
+Route::post('/payment_update', 
+    [PaymentController::class,'updatePayment']);
+Route::post('/payment_edit/{id}', 
+    [PaymentController::class,'editPayment']);
+Route::post('/payment_delete/{id}', 
+    [PaymentController::class,'deletePayment']);
+Route::get('/all_payment', 
+    [PaymentController::class,'allPaymentDetails']);                                                                   
+});
+
+
+
+
+ // Route::get('/products/{id}', [CategorieController::class,'index']);
