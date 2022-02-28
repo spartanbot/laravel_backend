@@ -74,21 +74,6 @@ Route::post('/basic_delete/{id}',
 Route::get('/all_info', 
     [BasicInformationController::class,'allInfo']);
 
-/**********************************************************
-*****************************************************
-*******route instructor related*****************************************
-*********************************************************************************/
-    
-   Route::post('/create_instruct', 
-    [InstructorDashboardController::class,'instruct_create']);
-   Route::post('/edit_instruct/{id}', 
-    [InstructorDashboardController::class,'instrct_edit']);
-   Route::post('/update_instruct', 
-    [InstructorDashboardController::class,'instrct_update']);
-   Route::post('/delete_instruct/{id}', 
-    [InstructorDashboardController::class,'instrct_delete']);
-   Route::get('/all_instructor', 
-    [InstructorDashboardController::class,'getAllInscrtuct']);
 
    /**********************************************************
    ***************************************************

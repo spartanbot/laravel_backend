@@ -198,12 +198,7 @@ class CourseController extends Controller
                 if ($request['course_fee'] == '') {
                     $response['course_fee'] = 'Please enter course fee';
                 }
-                if ($request['course_banner'] == '') {
-                    $response['course_banner'] = 'Please upload course banner';
-                }
-                if ($request['course_content'] == '') {
-                    $response['course_content'] = 'Please upload course content';
-                }
+               
                 if(count($response)){
                     $response['status']= 'error';
                     return response()->json($response,403);
