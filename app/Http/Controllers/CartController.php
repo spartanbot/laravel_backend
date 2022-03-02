@@ -83,4 +83,12 @@ class CartController extends Controller
             return $e;
         }
     }
+
+    public function checkoutOrder(Request $request){
+        try{
+         
+        }catch (Exception $e) {
+            return $e;
+        }
+    }
 }
