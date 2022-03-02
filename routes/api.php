@@ -14,6 +14,7 @@ use App\Http\Controllers\ResetPasswordController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
+use App\Http\Controllers\CartController;
 
 
 
@@ -130,11 +131,31 @@ Route::post('/update_course',
 [CourseController::class,'updateCourse']);
 Route::post('/remove_content', 
 [CourseController::class,'removeContent']);
+Route::get('/all_course', 
+[CourseController::class,'fetchAllCourse']);
 Route::get('/unpublish_course', 
 [CourseController::class,'fetchUnpublishCourse']);
 Route::post('/update_course_publish_status', 
 [CourseController::class,'updatePublishStatus']);
 
+/******************************************************************************
+ ****************************************route cart info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/add_to_cart', 
+[CartController::class,'cartAdd']);
+Route::get('/cart_items', 
+[CartController::class,'cartItem']);
+Route::post('/cart_item_delete', 
+[CartController::class,'cartDelete']);
+// Route::post('/remove_content', 
+// [CourseController::class,'removeContent']);
+// Route::get('/all_course', 
+// [CourseController::class,'fetchAllCourse']);
+// Route::get('/unpublish_course', 
+// [CourseController::class,'fetchUnpublishCourse']);
+// Route::post('/update_course_publish_status', 
+// [CourseController::class,'updatePublishStatus']);
 
  /******************************************************************************
  ****************************************route user basic info related************

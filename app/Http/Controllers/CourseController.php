@@ -144,6 +144,24 @@ class CourseController extends Controller
            }
     }
 
+    public function fetchAllCourse(){
+        try{
+            $fetchallCourse = DB::table('course')
+            ->where('verify','=',1)
+            ->orderBy('created_at','desc')->get()->toArray();
+            if($fetchallCourse){
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$fetchallCourse
+                ],200);
+            }
+        }catch(Exception $e){
+            $response['status'] = 'error';
+            $response['message'] = 'Somthing went wrong!';
+            return response()->json($response, 500);
+         }
+    }
+
     public function removeContent(Request $request){
         $response = [];
         if($request['id'] ==''){
