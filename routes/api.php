@@ -148,6 +148,8 @@ Route::get('/cart_items',
 [CartController::class,'cartItem']);
 Route::post('/cart_item_delete', 
 [CartController::class,'cartDelete']);
+Route::post('/checkout', 
+[CartController::class,'checkoutOrder']);
 // Route::post('/remove_content', 
 // [CourseController::class,'removeContent']);
 // Route::get('/all_course', 

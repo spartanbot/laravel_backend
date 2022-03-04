@@ -235,7 +235,6 @@ return [
         'JWTAuthFactory' => Tymon\JWTAuth\Facades\JWTAuthFactory::class,
         'Socialite' => Laravel\Socialite\Facades\Socialite::class,
         'PDF' => Barryvdh\DomPDF\Facade::class,
-
     ],
 
 ];
