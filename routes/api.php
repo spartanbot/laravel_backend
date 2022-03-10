@@ -16,8 +16,6 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CartController;
 
-
-
 /*
 |--------------------------------------------------------------------------
 | API Routes

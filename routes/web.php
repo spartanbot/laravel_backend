@@ -22,6 +22,4 @@ Route::get('/', function () {
 Route::get('/user/verify/{token}', [UserAuth::class,'verify_user'])->name('verify');
 
 Route::get('/pdf', [UserAuth::class,'downloadPdf']);
-Route::get('stripe', [StripeController::class, 'stripe']);
-// Route::post('/pay', [StripeController::class, 'stripePost']);
-Route::post('stripe', [StripeController::class, 'stripePost'])->name('stripe.post');
+Route::get('form', [StripeController::class, 'form']);

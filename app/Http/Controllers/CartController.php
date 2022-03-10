@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\StripeController;
 use Illuminate\Http\Request;
 use App\Models\Cart;
 use App\Models\Order;
@@ -88,6 +89,7 @@ class CartController extends Controller
     }
 
     public function checkoutOrder(Request $request){
+
         try{
             if($this->user['role'] == 'seller' || 'user'){
                 // $paymetDetails  =  PaymentDetail::create([
@@ -97,72 +99,32 @@ class CartController extends Controller
                 //     'expiration' => $request->expiration,
                 //     'cart_holder_name' => $request->cart_holder_name,
                 // ]);
-                $stripe = new \Stripe\StripeClient(env('STRIPE_SECRET'));
-                $token = $stripe->tokens->create([
-                    'card' => [
-                      'number' => '4242424242424242',
-                      'exp_month' => 3,
-                      'exp_year' => 2023,
-                      'cvc' => '314',
-                    ],
-                  ]);
-                  $customer = $stripe->customers->create(array(
-                    'name' => $this->user['full_name'],
-                    'description' => 'test description',
-                    'email' => $this->user['user_email'],
-                    'source'  => $token->id,
-                    //"address" => ["city" => $customerCity, "country" => $customerCountry, "line1" => $customerAddress, "line2" => "", "postal_code" => $customerZipcode, "state" => $customerState]
-                    )); 
-                  if($customer){
-                    $payDetails = $stripe->charges->create([
-                        'customer' => $customer->id,
-                        'amount' => 2000,
-                        'currency' => 'usd',
-                        //'source' => $token->id,
-                        "metadata" => ["order_id" => "6735"],
-                        'description' => 'My First Test Charge (created for API docs)',
-                      ]);
-                  }
-                  print_r($payDetails);
-                  die();
-                //$stripe = Stripe::setApiKey(env('STRIPE_SECRET'));
-
-                // $token = $stripe->tokens()->create([
-                //     'card' => [
-                //     'number' => $request->card_number,
-                //     'exp_month' => $request->exp_mohth,
-                //     'exp_year' => $request->exp_year,
-                //     'cvc' => $request->cvv,
-                //     ],
-                //     ]);
-                // print_r($token);
-                // die();
-
-                $totalAmount = 0;
+                $totalAmount = 20;
                 $cartItems = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
-               foreach($cartItems as $itme){
-                $totalAmount += $itme['course_fee'];
-                    $Order  =  Order::create([
-                            'user_id' => $this->user['id'],
-                            'status' => 1,
-                            'subtotal' => $totalAmount,
-                            'total' => $totalAmount,
-                            'promo'=> 'NA',
-                            'discount'=> 0,
-                            'grandtotal'=> $totalAmount,
-                            'fullname'=> $this->user['full_name'],
-                            'email'=> $this->user['user_email'] 
-                    ]);
-               }
-                echo $totalAmount;
-                die();
-            
-            // if($cartItem){
-            //     return response()->json([
-            //         'status' => true,
-            //         'message' => 'Cart added successfully!'
-            //     ], 200);
-            // }
+                if($cartItems){
+                    $stripeObj = new StripeController;
+                    $payDetails = $stripeObj->stripeCharges($request->token,$totalAmount);
+                    if($payDetails){
+                            $Order = $this->createOrder($totalAmount);
+                            if($Order){
+                                $paidAmount = $payDetails->amount_captured;
+                                $transaction_id = $payDetails->balance_transaction;
+                                if($Order->id){
+                                    $Orderitems = $this->orderItemCreate($cartItems,$Order->id);
+                                    print_r($Orderitems);
+                                    die();
+                                }  
+                            }
+                    }else{
+                        $response['status'] = 'error';
+                        $response['message'] = 'Something went wrong in payment.';
+                        return response()->json($response, 403);
+                    }
+                }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'Your Cart is currently empty.';
+                    return response()->json($response, 403);
+                } 
             }else{
                     $response['status'] = 'error';
                     $response['message'] = 'Only seller, User can use cart';
@@ -171,5 +133,38 @@ class CartController extends Controller
         }catch (Exception $e) {
             return $e;
         }
+    }
+
+    public function createOrder($totalAmount){
+        $OrderDetails  =  Order::create([
+            'user_id' => $this->user['id'],
+            'status' => 1,
+            'subtotal' => $totalAmount,
+            'total' => $totalAmount,
+            'promo'=> 'NA',
+            'discount'=> 0,
+            'grandtotal'=> $totalAmount,
+            'fullname'=> $this->user['full_name'],
+            'email'=> $this->user['user_email'] 
+        ]);
+        return $OrderDetails;
+    }
+
+    public function orderItemCreate($allItem,$orderId){
+        $ItemData = array();
+        foreach($allItem as $item){
+            if($item['id'] && $item['course_name'] && $item['course_fee']){
+                $OrderItem  =  OrderItems::create([
+                    'user_id' => $this->user['id'],
+                    'course_id' => $item['id'],
+                    'order_id' => $orderId,
+                    'course_name' => $item['course_name'],
+                    'course_fee'=> $item['course_fee'],
+                    'discount'=> 0
+               ]);
+               $ItemData = $OrderItem;
+            }
+        }
+        return $ItemData;
     }
 }
