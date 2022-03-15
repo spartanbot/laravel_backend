@@ -13,6 +13,8 @@ class CreatePaymentDetailsTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('payment_details'))
+        {
         Schema::create('payment_details', function (Blueprint $table) {
             $table->id();
             $table->string('product_name');
@@ -27,6 +29,7 @@ class CreatePaymentDetailsTable extends Migration
             $table->enum('status', array('1','0'))->default('1');
             $table->timestamps();
         });
+    }
     }
 
     /**

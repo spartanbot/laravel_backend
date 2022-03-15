@@ -13,12 +13,15 @@ class CreateProductsTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('products'))
+        {
         Schema::create('products', function (Blueprint $table) {
             $table->id();
             $table->integer('cat_id');
             $table->integer('name');
             $table->timestamps();
         });
+       }
     }
 
     /**

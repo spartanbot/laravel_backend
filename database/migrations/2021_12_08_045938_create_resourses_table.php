@@ -13,6 +13,8 @@ class CreateResoursesTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('resourses'))
+        {
         Schema::create('resourses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -25,6 +27,7 @@ class CreateResoursesTable extends Migration
             $table->enum('status', array('1','0'))->default('1');
             $table->timestamps();
         });
+       }
     }
 
     /**

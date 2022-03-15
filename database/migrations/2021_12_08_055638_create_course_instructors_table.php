@@ -13,6 +13,8 @@ class CreateCourseInstructorsTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('course_instructors'))
+        {
         Schema::create('course_instructors', function (Blueprint $table) {
             $table->id();
             $table->string('name');
@@ -25,6 +27,7 @@ class CreateCourseInstructorsTable extends Migration
             $table->enum('status', array('1','0'))->default('1');
             $table->timestamps();
         });
+      }
     }
 
     /**

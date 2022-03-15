@@ -8,6 +8,7 @@ use App\Models\Cart;
 use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\PaymentDetail;
+use App\Models\Enrollment;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use DB;
@@ -16,6 +17,7 @@ use Exception;
 class CartController extends Controller
 {
     private $user;
+    public $transaction_id;
     
     public function __construct(){
          $this->user = JWTAuth::parseToken()->authenticate();
@@ -54,6 +56,27 @@ class CartController extends Controller
                 return response()->json([
                     'success'=>true,
                     'response'=>$cartItem
+                ],200);
+            }
+            }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'Only seller, User can use fetch cart item';
+                    return response()->json($response, 403);
+            }
+        }catch (Exception $e) {
+            return $e;
+        }
+    }
+
+    public function clearCartAfterCheckout(){
+        try{
+            if($this->user['role'] == 'seller' || 'user'){
+                $clearCart = Cart::where('user_id','=',$this->user['id'])
+                ->delete();
+            if($clearCart){
+                return response()->json([
+                    'success'=>true,
+                    'message'=>'Cart clear successfully!'
                 ],200);
             }
             }else{
@@ -107,13 +130,18 @@ class CartController extends Controller
                     if($payDetails){
                             $Order = $this->createOrder($totalAmount);
                             if($Order){
-                                $paidAmount = $payDetails->amount_captured;
-                                $transaction_id = $payDetails->balance_transaction;
+                                // $paidAmount = $payDetails->amount_captured;
+                                $this->transaction_id = $payDetails->balance_transaction;
                                 if($Order->id){
                                     $Orderitems = $this->orderItemCreate($cartItems,$Order->id);
-                                    print_r($Orderitems);
-                                    die();
-                                }  
+                                    if($Orderitems){
+                                        $this->clearCartAfterCheckout();
+                                        return response()->json([
+                                            'success'=>true,
+                                            'message'=>'Successfully enroll in this course!'
+                                        ],200);
+                                    }
+                                }
                             }
                     }else{
                         $response['status'] = 'error';
@@ -151,20 +179,60 @@ class CartController extends Controller
     }
 
     public function orderItemCreate($allItem,$orderId){
+        $transactionObj = new StripeController;
         $ItemData = array();
         foreach($allItem as $item){
             if($item['id'] && $item['course_name'] && $item['course_fee']){
                 $OrderItem  =  OrderItems::create([
                     'user_id' => $this->user['id'],
-                    'course_id' => $item['id'],
+                    'course_id' => $item['course_id'],
                     'order_id' => $orderId,
                     'course_name' => $item['course_name'],
                     'course_fee'=> $item['course_fee'],
                     'discount'=> 0
                ]);
-               $ItemData = $OrderItem;
+               $ItemData['OrderItems'] = $OrderItem;
+               $enrollments = $this->createEnrollment($item['course_id']);
+                    if($this->transaction_id){
+                            $transactionSave = $transactionObj->transaction($this->user['id'],$item['course_id'],$this->user['user_email'],$this->transaction_id,date('Y-m-d H:i:s'),date('Y-m-d H:i:s'));
+                            if($transactionSave){
+                                $ItemData['transaction'] = $transactionSave;
+                            }else{
+                                $response['status'] = 'error';
+                                $response['message'] = "Can't insert transections items";
+                                return response()->json($response, 403);
+                            }
+                    }else{
+                        $response['status'] = 'error';
+                        $response['message'] = "transaction id is not avilable";
+                        return response()->json($response, 403);
+                    }
+                if($enrollments){
+                    $ItemData['enrolments'] = $enrollments;
+                }else{
+                    $response['status'] = 'error';
+                    $response['message'] = "Can't enrole on this item";
+                    return response()->json($response, 403);
+                }
+            }else{
+                $response['status'] = 'error';
+                $response['message'] = "Can't created order items";
+                return response()->json($response, 403);
             }
         }
         return $ItemData;
+    }
+
+    public function createEnrollment($course_id)
+    {
+        try{
+            $enrollment = Enrollment::create([
+                'user_id'=>$this->user['id'],
+                'course_id'=>$course_id,
+            ]);
+            return $enrollment;
+            }catch (Exception $e) {
+                return $e;
+            }
     }
 }

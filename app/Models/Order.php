@@ -21,4 +21,9 @@ class Order extends Model
         'fullname',
         'email'
     ];
+
+    public function orderItems()
+    {
+        return $this->hasMany(OrderItems::class,'order_id','id');
+    }
 }

@@ -13,6 +13,8 @@ class CreateSellersTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('sellers'))
+        {
         Schema::create('sellers', function (Blueprint $table) {
             $table->id();
             $table->string('product_name');
@@ -26,6 +28,7 @@ class CreateSellersTable extends Migration
             $table->enum('status', array('1','0'))->default('1');
             $table->timestamps();
         });
+      }
     }
 
     /**

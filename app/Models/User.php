@@ -52,8 +52,6 @@ class User extends Authenticatable implements JWTSubject
         'role',
         'createdDate',
         'user_status',
-        'stripe_publish_key',
-        'stripe_secret_key'
 
     ];
 

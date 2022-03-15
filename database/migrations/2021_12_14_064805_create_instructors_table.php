@@ -13,6 +13,8 @@ class CreateInstructorsTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('instructors'))
+        {
         Schema::create('instructors', function (Blueprint $table) {
             $table->id();
             $table->string('course_name');
@@ -25,6 +27,7 @@ class CreateInstructorsTable extends Migration
             $table->integer('instructor_amount');
             $table->timestamps();
         });
+     }
     }
 
     /**

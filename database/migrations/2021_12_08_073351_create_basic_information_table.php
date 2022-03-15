@@ -13,6 +13,8 @@ class CreateBasicInformationTable extends Migration
      */
     public function up()
     {
+        if(!Schema::hasTable('basic_information'))
+        {
         Schema::create('basic_information', function (Blueprint $table) {
             $table->id();
             $table->string('first_name');
@@ -23,6 +25,7 @@ class CreateBasicInformationTable extends Migration
             $table->enum('status', array('1','0'))->default('1');
             $table->timestamps();
         });
+       }
     }
 
     /**

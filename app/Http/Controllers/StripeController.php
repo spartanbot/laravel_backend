@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Models\Transaction;
 
 class StripeController extends Controller
 {
@@ -21,4 +22,17 @@ class StripeController extends Controller
       ]);
       return $payDetails;
   }
+
+  public function transaction($uID,$courseId,$email,$transaction_id,$created_at,$updated_at){
+      $TransactionDetails  =  Transaction::create([
+        'user_id' => $uID,
+        'course_id' => $courseId,
+        'email' => $email,
+        'transaction_id' => $transaction_id,
+        'created_at'=> $created_at,
+        'updated_at'=> $updated_at
+    ]);
+    return $TransactionDetails;
+  }
+
 }

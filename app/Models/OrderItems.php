@@ -18,4 +18,9 @@ class OrderItems extends Model
         'course_fee',
         'discount',
     ];
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class,'order_id','id');
+    }
 }
