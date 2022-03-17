@@ -135,6 +135,8 @@ Route::get('/unpublish_course',
 [CourseController::class,'fetchUnpublishCourse']);
 Route::post('/update_course_publish_status', 
 [CourseController::class,'updatePublishStatus']);
+Route::get('/all_resourse', 
+[CourseController::class,'fetchAllResourse']);
 
 /******************************************************************************
  ****************************************route cart info related************

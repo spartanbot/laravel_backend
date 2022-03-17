@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Course;
 use App\Models\Category;
 use App\Models\Language;
+use App\Models\Resourse;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use DB;
@@ -327,6 +328,26 @@ class CourseController extends Controller
                 return response()->json($response, 500);
             }
         }
+    }
+
+    public function fetchAllResourse(Request $request){
+       try{
+           if($this->user['role'] == 'seller' || 'user'){
+            $resourseItem = Resourse::where('seller_id','!=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
+            if($resourseItem){
+                return response()->json([
+                    'status'=>true,
+                    'response'=>$resourseItem
+                   ],200);
+            }
+           }else{
+                $response['status'] = 'error';
+                $response['message'] = 'Only seller, User can use fetch Resourse';
+                return response()->json($response, 403);
+            }
+       }catch(Exception $e){
+         return $e;
+       }
     }
 
 }
