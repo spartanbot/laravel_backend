@@ -9,6 +9,7 @@ use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\PaymentDetail;
 use App\Models\Enrollment;
+use App\Models\SellerAccounts;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 use DB;
@@ -18,7 +19,8 @@ class CartController extends Controller
 {
     private $user;
     public $transaction_id;
-    
+    public $charge_id;
+
     public function __construct(){
          $this->user = JWTAuth::parseToken()->authenticate();
     }
@@ -26,18 +28,25 @@ class CartController extends Controller
     public function cartAdd(Request $request){
         try{
             if($this->user['role'] == 'seller' || 'user'){
-                $cartItem  =  Cart::create([
-                    'user_id' => $this->user['id'],
-                    'course_id' => $request->course_id,
-                    'course_name' => $request->course_name,
-                    'course_fee' => $request->course_fee
-            ]);
-            if($cartItem){
-                return response()->json([
-                    'status' => true,
-                    'message' => 'Cart added successfully!'
-                ], 200);
-            }
+                $coursedata = DB::table('course')
+                ->select('seller_id')
+                ->where('id','=', $request->course_id)
+                ->get();
+                if($coursedata){
+                    $cartItem  =  Cart::create([
+                        'user_id' => $this->user['id'],
+                        'course_id' => $request->course_id,
+                        'seller_id' => $coursedata[0]->seller_id,
+                        'course_name' => $request->course_name,
+                        'course_fee' => $request->course_fee
+                    ]);
+                    if($cartItem){
+                        return response()->json([
+                            'status' => true,
+                            'message' => 'Cart added successfully!'
+                        ], 200);
+                    }
+                }
             }else{
                     $response['status'] = 'error';
                     $response['message'] = 'Only seller, User can use cart';
@@ -122,37 +131,49 @@ class CartController extends Controller
                 //     'expiration' => $request->expiration,
                 //     'cart_holder_name' => $request->cart_holder_name,
                 // ]);
-                $totalAmount = 20;
+                
                 $cartItems = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
                 if($cartItems){
-                    $stripeObj = new StripeController;
-                    $payDetails = $stripeObj->stripeCharges($request->token,$totalAmount);
-                    if($payDetails){
-                            $Order = $this->createOrder($totalAmount);
-                            if($Order){
-                                // $paidAmount = $payDetails->amount_captured;
-                                $this->transaction_id = $payDetails->balance_transaction;
-                                if($Order->id){
-                                    $Orderitems = $this->orderItemCreate($cartItems,$Order->id);
-                                    if($Orderitems){
-                                        $this->clearCartAfterCheckout();
-                                        return response()->json([
-                                            'success'=>true,
-                                            'message'=>'Successfully enroll in this course!'
-                                        ],200);
-                                    }
+                    $totalAmount = $request->totalAmount;
+                    $Order = $this->createOrder($totalAmount);
+                    if($Order){
+                        $stripeObj = new StripeController;
+                        $payDetails = $stripeObj->stripeCharges($request->token,$request->totalAmount);
+                        if($payDetails->balance_transaction){
+                            $this->transaction_id = $payDetails->balance_transaction;
+                            $this->charge_id = $payDetails->id;
+                            if($Order->id){
+                                $UpdateorderStatus = Order::where('id','=', $Order->id)->update([
+                                    'status' => "Paid",
+                                    'charge_id' => $payDetails->id,
+                                    'transaction_id' => $payDetails->balance_transaction
+                                ]);
+                                if($UpdateorderStatus){
+                                        $Orderitems = $this->orderItemCreate($cartItems,$Order->id);
+                                        if($Orderitems){
+                                            $this->clearCartAfterCheckout();
+                                                return response()->json([
+                                                        'success'=>true,
+                                                        'message'=>'Successfully enroll in this course!'
+                                                        ],200);
+                                        }
+                                }else{
+                                    $response['status'] = 'error';
+                                    $response['message'] = 'Something went wrong in update order status.';
+                                    return response()->json($response, 403);
                                 }
                             }
-                    }else{
-                        $response['status'] = 'error';
-                        $response['message'] = 'Something went wrong in payment.';
-                        return response()->json($response, 403);
+                        }else{
+                            $response['status'] = 'error';
+                            $response['message'] = 'Something went wrong in payment.';
+                            return response()->json($response, 403);
+                        }
                     }
                 }else{
                     $response['status'] = 'error';
                     $response['message'] = 'Your Cart is currently empty.';
                     return response()->json($response, 403);
-                } 
+                }
             }else{
                     $response['status'] = 'error';
                     $response['message'] = 'Only seller, User can use cart';
@@ -166,14 +187,10 @@ class CartController extends Controller
     public function createOrder($totalAmount){
         $OrderDetails  =  Order::create([
             'user_id' => $this->user['id'],
-            'status' => 1,
-            'subtotal' => $totalAmount,
+            'status' => "pending",
             'total' => $totalAmount,
-            'promo'=> 'NA',
-            'discount'=> 0,
-            'grandtotal'=> $totalAmount,
             'fullname'=> $this->user['full_name'],
-            'email'=> $this->user['user_email'] 
+            'email'=> $this->user['user_email'],
         ]);
         return $OrderDetails;
     }
@@ -189,8 +206,8 @@ class CartController extends Controller
                     'order_id' => $orderId,
                     'course_name' => $item['course_name'],
                     'course_fee'=> $item['course_fee'],
-                    'discount'=> 0
                ]);
+               $this->calculateAndTransfer($item['course_fee'],$item['seller_id']);
                $ItemData['OrderItems'] = $OrderItem;
                $enrollments = $this->createEnrollment($item['course_id']);
                     if($this->transaction_id){
@@ -233,6 +250,22 @@ class CartController extends Controller
             return $enrollment;
             }catch (Exception $e) {
                 return $e;
+            }
+    }
+
+    public function calculateAndTransfer($amount,$seller_id){
+        $stripeObj = new StripeController;
+        $percentage = 70;
+        $totalamount = $amount;
+        $transferAmount = ($percentage / 100) * $totalamount;
+        //get seller account id
+        $selleraccount = DB::table('sellers_accounts')
+            ->select('stripeAccount')
+            ->where('user_id','=', $seller_id)
+            ->get();
+            $stripeAccount = $selleraccount[0]->stripeAccount;
+            if($selleraccount){
+                $stripeObj->transferToSeller($transferAmount,$stripeAccount,$this->charge_id);
             }
     }
 }

@@ -16,6 +16,7 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CartController;
 
+
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -73,24 +74,6 @@ Route::post('/basic_delete/{id}',
 Route::get('/all_info', 
     [BasicInformationController::class,'allInfo']);
 
-
-   /**********************************************************
-   ***************************************************
-   *********route sellers related*************************************************
-   *************************************************************************/
-
-
-Route::post('/create_seller', 
-    [SellerDashboardController::class,'seller_create']);
-Route::post('/update_seller', 
-    [SellerDashboardController::class,'seller_update']);
-Route::post('/edit_seller/{id}', 
-    [SellerDashboardController::class,'seller_edit']);
-Route::post('/delete_seller/{id}', 
-    [SellerDashboardController::class,'seller_delete']);
-Route::get('/all_sellers', 
-    [SellerDashboardController::class,'allSeller']);
-    
  /******************************************************************************
  ****************************************route Category info related************
  *********************************************************************************
@@ -150,14 +133,13 @@ Route::post('/cart_item_delete',
 [CartController::class,'cartDelete']);
 Route::post('/checkout', 
 [CartController::class,'checkoutOrder']);
-// Route::post('/remove_content', 
-// [CourseController::class,'removeContent']);
-// Route::get('/all_course', 
-// [CourseController::class,'fetchAllCourse']);
-// Route::get('/unpublish_course', 
-// [CourseController::class,'fetchUnpublishCourse']);
-// Route::post('/update_course_publish_status', 
-// [CourseController::class,'updatePublishStatus']);
+
+/******************************************************************************
+ ****************************************route cart info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/add_bank', 
+[SellerDashboardController::class,'addBankAccount']);
 
  /******************************************************************************
  ****************************************route user basic info related************

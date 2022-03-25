@@ -4,10 +4,11 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaction;
+use JWTAuth;
 
 class StripeController extends Controller
 {
-   
+
   public function form()
     {
         return view('form');
@@ -33,6 +34,18 @@ class StripeController extends Controller
         'updated_at'=> $updated_at
     ]);
     return $TransactionDetails;
+  }
+
+
+  public function transferToSeller($amount,$account_id,$charge_id){
+    \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+    $transfer = \Stripe\Transfer::create([
+      "amount" => $amount*100,
+      "currency" => "usd",
+      "source_transaction" => $charge_id,
+      "destination" => $account_id,
+    ]);
+
   }
 
 }

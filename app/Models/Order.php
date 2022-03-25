@@ -13,13 +13,11 @@ class Order extends Model
     protected $fillable =[
         'user_id',
         'status',
-        'subtotal',
         'total',
-        'promo',
-        'discount',
-        'grandtotal',
         'fullname',
-        'email'
+        'email',
+        'charge_id',
+        'transaction_id'
     ];
 
     public function orderItems()

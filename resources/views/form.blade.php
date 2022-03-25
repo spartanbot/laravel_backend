@@ -50,7 +50,7 @@
           <script src="https://js.stripe.com/v3/"></script>
           <script type="text/javascript">
            // Create a Stripe client
-          var stripe = Stripe('pk_test_51KawvBJdQJ0gLkGYnooqalrIEvjjNfBz5j9w7Wi5d04jWZ6NyM0Cl4uVxHKZ6gxWlMYsCiiTvpT9fdXUNrktkH2r0092DeY5iW');
+          var stripe = Stripe('pk_test_51Kgn5ADWukM2jk37saN2CRdHEJSluluK4ujZYs8eDmna6QdOkmrj8oQjjFRY92BpPDOmfZ4pb5Bsom3Vokz6Z3yh00Ytk3unUz');
 
           // Create an instance of Elements
           var elements = stripe.elements();

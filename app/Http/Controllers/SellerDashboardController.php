@@ -4,173 +4,171 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Seller;
+use App\Models\SellerAccounts;
+use JWTAuth;
+use DB;
 
 class SellerDashboardController extends Controller
 {
-    public function seller_create(Request $request){
 
-        $response=[];
+   private $user;
+      
+   public function __construct(){
+         $this->user = JWTAuth::parseToken()->authenticate();
+   }
 
-        if($request['product_name'] ==''){
-            $response['product_name']= 'Please enter product name';
-        }
+   public function addBankAccount(Request $request){
+      \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+      $response=[];
 
-        if($request['subject'] ==''){
-            $response['subject']= 'Please enter subject';
-        }
+      if($request['account_holder_name'] ==''){
+          $response['account_holder_name']= 'Please Enter account holder name';
+      }
 
-        if($request['category'] ==''){
-            $response['category']= 'Please enter category';
-        }
+      if($request['routing_number'] ==''){
+        $response['routing_number']= 'Please Enter routing number';
+      }
 
-        if($request['language'] ==''){
-            $response['language']= 'Please enter language';
-        }
-        if($request['grade_level'] ==''){
-            $response['grade_level']= 'Please enter grade level';
-        }
-        if($request['seller_image'] ==''){
-            $response['seller_image']= 'Please enter seller image';
-        }
+      if($request['account_number'] ==''){
+        $response['account_number']= 'Please Enter account number';
+      }
 
-        if($request['description'] ==''){
-            $response['description']= 'Please enter description';
-        }
+      if($request['line1'] ==''){
+        $response['line1']= 'Please Enter address line1';
+      }
 
-         if($request['price'] ==''){
-            $response['price']= 'Please enter price';
-        }
+      if($request['city'] ==''){
+        $response['city']= 'Please Enter city';
+      }
 
+      if($request['state'] ==''){
+        $response['state']= 'Please Enter state';
+      }
 
-        if(count($response)){
-            $response['error']= true;
-            return response()->json($response);
-         }else{
-               $path = $request->file('seller_image')->store('/images/seller');
+      if($request['postal_code'] ==''){
+        $response['postal_code']= 'Please Enter postal code';
+      }
 
-               $sellers = new Seller;
-               $sellers->product_name =$request->product_name;
-               $sellers->subject =$request->subject;
-               $sellers->category =$request->category;
-               $sellers->language =$request->language;
-               $sellers->grade_level =$request->grade_level;
-               $sellers->seller_image =$path;
-               $sellers->description =$request->description;
-               $sellers->price =$request->price;
-               $sellers->save();             
-               return response()->json([
-              'message' => 
-              'sellers create successfully!',
-              'sellers' => $sellers
-              ,],201);
+      if($request['dob'] ==''){
+        $response['dob']= 'Please Enter Date of birth(day/month/year)';
+      }
 
-         }
+      if($request['first_name'] ==''){
+        $response['first_name']= 'Please Enter First name';
+      }
 
-    }
+      if($request['last_name'] ==''){
+        $response['last_name']= 'Please Enter Last name';
+      }
 
-    public function seller_update(Request $request){
+      if($request['gender'] ==''){
+        $response['gender']= 'Please Enter gender';
+      }
 
-        $response=[];
+      if($request['phone'] ==''){
+        $response['phone']= 'Please Enter phone number';
+      }
 
-        if($request['product_name'] ==''){
-            $response['product_name']= 'Please enter product name';
-        }
+      if($request['ssn_last_4'] ==''){
+        $response['ssn_last_4']= 'Please Enter social security number last 4 digit';
+      }
+      if(count($response)){
+        $response['error']= true;
+        return response()->json($response);
+     }else{
+            try{
+              $selleraccount = SellerAccounts::where('user_id','=',$this->user['id'])->get();
+              if(sizeof($selleraccount)){
+                $response['status'] = 'error';
+                $response['message'] = 'You Have already account on stripe. Please contact your Admin ';
+                return response()->json($response, 403);
 
-        if($request['subject'] ==''){
-            $response['subject']= 'Please enter subject';
-        }
+              }else{
 
-        if($request['category'] ==''){
-            $response['category']= 'Please enter category';
-        }
+              $dob = $request->dob;
+              $date = explode('/', $dob);
 
-        if($request['language'] ==''){
-            $response['language']= 'Please enter language';
-        }
-        if($request['grade_level'] ==''){
-            $response['grade_level']= 'Please enter grade level';
-        }
-        if($request['seller_image'] ==''){
-            $response['seller_image']= 'Please enter seller image';
-        }
+              // first create bank token
+              $bankToken =  \Stripe\Token::create([
+                'bank_account' => [
+                    'country' => 'US',
+                    'currency' => 'usd',
+                    'account_holder_name' => $request->account_holder_name,
+                    'account_holder_type' => 'individual',
+                    'routing_number' => $request->routing_number,
+                    'account_number' => $request->account_number
+                ]
+              ]); 
 
-        if($request['description'] ==''){
-            $response['description']= 'Please enter description';
-        }
+              // second create stripe account
+              $stripeAccount = \Stripe\Account::create([
+                "type" => "custom",
+                "country" => "US",
+                "email" => $this->user['user_email'],   
+                "business_type" => "individual",
+                'capabilities' => [
+                  'card_payments' => ['requested' => true],
+                  'transfers' => ['requested' => true],
+                ],
+                "individual" => [
+                    'address' => [
 
-         if($request['price'] ==''){
-            $response['price']= 'Please enter price';
-        }
-
-
-        if(count($response)){
-            $response['error']= true;
-            return response()->json($response);
-         }else{
-            $path = $request->file('seller_image')->store('/images/seller');
-
-            $seller_update = Seller::where('id', $request->id)->update([
-                'product_name' => $request->product_name,
-                'subject'=> $request->subject,
-                'category'=> $request->category,
-                'language'=> $request->language,
-                'grade_level'=> $request->grade_level,
-                'seller_image'=> $path,
-                'description'=> $request->description,
-                'price'=> $request->price
+                        'city' => $request->city,
+                        'line1' => $request->line1,
+                        'state'=> $request->state,
+                        'postal_code' => $request->postal_code,            
+                    ],
+                    'dob'=>[
+                        "day" => $date[0],
+                        "month" => $date[1],
+                        "year" => $date[2]
+                    ],
+                    "email" => $this->user['user_email'],
+                    "first_name" => $request->first_name,
+                    "last_name" => $request->last_name,
+                    "gender" => $request->gender,
+                    "phone"=> $request->phone,
+                    "ssn_last_4"=> $request->ssn_last_4,
+                ]     
               ]);
-            return response()->json([
-            'error'=>false,
-            'msg'=>"seller updated successfully!"
-           ]);
-         }
-
-    }
-
-
-    public function seller_edit($id){
-
-         try{
-         $seller=Seller::where('id','=',$id)->where('status',1)->first();
-
-         return response()->json([
-            'error'=>false,
-            'response'=>$seller
-        ]);
-
+              // third link the bank account with the stripe account
+              $bankAccount = \Stripe\Account::createExternalAccount(
+              $stripeAccount->id,['external_account' => $bankToken->id]
+              );
+              // Fourth stripe account update for tos acceptance
+              \Stripe\Account::update(
+                $stripeAccount->id,[
+                'tos_acceptance' => [
+                      'date' => time(),
+                      'ip' => $_SERVER['REMOTE_ADDR'] // Assumes you're not using a proxy
+                    ],
+                ]
+              );
+              $response = ["bankToken"=>$bankToken->id,"stripeAccount"=>$stripeAccount->id,"bankAccount"=>$bankAccount->id];
+              if($bankToken->id && $stripeAccount->id && $bankAccount->id){
+                  $accountDetails  =  SellerAccounts::create([
+                    'user_id' => $this->user['id'],
+                    'bankToken' => $bankToken->id ,
+                    'stripeAccount' => $stripeAccount->id ,
+                    'bankAccount' => $bankAccount->id ,
+                    //'status',
+                ]);
+                if($accountDetails){
+                  return response()->json([
+                    'success'=>true,
+                    'responce'=>$response
+                  ],200);
+                }
+              }
+            }
         }catch(Exception $e){
-           return "error";
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
         }
+     }
+   }
+   
 
-    }
-
-    public function seller_delete($id){
-          try{
-          $seller_delete = Seller::where('id',$id)->update([
-            'status' =>'0'
-          ]);
-         return response()->json([
-            'error'=>false,
-            'msg'=>"Delete recard successfully!"]);
-        }catch(Exception $e){
-         return "error";
-        }
-
-    }
-
-    public function allSeller(){
-        
-        $sellers=Seller::where('status','=','1')->orderBy('created_at','desc')->get()->toArray();
-         if($sellers){
-            return response()->json([
-                'error'=>false, 
-                'response'=>$sellers
-            ]);
-         }else{
-            return response()->json([
-                'error'=>true,
-                'response'=>$sellers
-            ]);
-          }
-    }
 }

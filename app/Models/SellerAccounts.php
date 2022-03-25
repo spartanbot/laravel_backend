@@ -5,18 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Cart extends Model
+class SellerAccounts extends Model
 {
     use HasFactory;
-    protected $table ="cart";
+    protected $table ="sellers_accounts";
 
     protected $fillable =[
         'user_id',
-        'course_id',
-        'seller_id',
-        'course_name',
-        'course_fee',
-        'created_at',
-        'updated_at'
+        'bankToken',
+        'stripeAccount',
+        'bankAccount',
+        'status',
     ];
 }

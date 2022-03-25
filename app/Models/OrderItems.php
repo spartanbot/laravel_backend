@@ -16,7 +16,6 @@ class OrderItems extends Model
         'order_id',
         'course_name',
         'course_fee',
-        'discount',
     ];
 
     public function order()
