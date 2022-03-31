@@ -15,6 +15,7 @@ use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\AdminController;
 
 
 /*
@@ -140,6 +141,17 @@ Route::post('/checkout',
  *****************************/
 Route::post('/add_bank', 
 [SellerDashboardController::class,'addBankAccount']);
+
+/******************************************************************************
+ ****************************************route admin info related************
+ *********************************************************************************
+ *****************************/
+Route::get('/admin/fetch_all_order', 
+[AdminController::class,'fetchAllOrders']);
+Route::get('/admin/fetch_all_products', 
+[AdminController::class,'fetchAllproduct']);
+Route::get('/admin/single_product', 
+[AdminController::class,'singleProductPage']);
 
  /******************************************************************************
  ****************************************route user basic info related************
