@@ -152,6 +152,22 @@ Route::get('/admin/fetch_all_products',
 [AdminController::class,'fetchAllproduct']);
 Route::get('/admin/single_product', 
 [AdminController::class,'singleProductPage']);
+Route::get('/admin/all_buyer', 
+[AdminController::class,'fetchBuyers']);
+Route::get('/admin/view_profile', 
+[AdminController::class,'viewUserProfile']);
+Route::get('/admin/user_order_history', 
+[AdminController::class,'userOrderHistory']);
+Route::get('/admin/fetch_user_orderItems', 
+[AdminController::class,'userOrderItem']);
+Route::get('/admin/all_seller', 
+[AdminController::class,'fetchSellers']);
+Route::get('/admin/seller_profile', 
+[AdminController::class,'viewSellerProfile']);
+Route::get('/admin/seller_products', 
+[AdminController::class,'sellerProducts']);
+Route::get('/admin/all_users', 
+[AdminController::class,'all_users']);
 
  /******************************************************************************
  ****************************************route user basic info related************
