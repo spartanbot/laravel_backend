@@ -3,8 +3,15 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Carbon\Carbon;
 use App\Models\Seller;
 use App\Models\SellerAccounts;
+use App\Models\Order;
+use App\Models\OrderItems;
+use App\Models\User;
+use App\Models\Course;
+use Auth;
 use JWTAuth;
 use DB;
 
@@ -170,5 +177,381 @@ class SellerDashboardController extends Controller
      }
    }
    
+   public function topProducts(){
+     try{
+      if($this->user['role'] = 'seller'){
+        $all_data = [];
+        $fetch_course = DB::table('course')
+            ->where('seller_id','=',$this->user['id'])
+            ->select('id','course_title','course_fee')
+            ->get();
+          $top_sell_product = [];
+          foreach($fetch_course as $top_sell){
+            $top_sell_product['id'] = $top_sell->id;
+            $top_sell_product['course_title'] = $top_sell->course_title;
+            $top_sell_product['course_fee'] = $top_sell->course_fee;
+            $all_topSELL = OrderItems::where('course_id','=',$top_sell->id)
+            ->select('course_id', DB::raw('COUNT(course_id) as count'))
+            ->groupBy('course_id')
+            ->orderBy('count', 'desc')
+            ->take(10)
+            ->get();
+            foreach($all_topSELL as $sell_item){
+              $top_sell_product['total_sale'] = $sell_item->count;
+              $top_sell_product['total_revenue'] = $top_sell->course_fee * $sell_item->count;
+            }
+            array_push($all_data,$top_sell_product);
+          }
+          return response()->json([
+            'success'=>true,
+            'response'=>$all_data
+            ],200);
+      }
+     }catch(Exception $e){
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+   }
 
+  public function fetchSellerOrder(){
+      try{
+        $all_data = [];
+        if($this->user['role'] = 'seller'){
+          $orderd_item = OrderItems::where('seller_id','=',$this->user['id'])
+          ->join('users', 'users.id','=','user_id')
+          ->select('order_id','course_id','user_id','users.full_name')
+          ->get();
+          $all_order = [];
+          foreach($orderd_item as $items){
+                   $orders = Order::where('id','=',$items['order_id']) 
+                   ->select('created_at','status','total')
+                   ->get();
+                   foreach($orders as $order){
+                    $all_order['order_id'] = $items->order_id;
+                    $all_order['customer'] = $items->full_name;
+                    $all_order['created_at'] = $order->created_at;
+                    $all_order['status'] = $order->status;
+                    $all_order['total'] = $order->total;
+                   }
+            array_push($all_data,$all_order);
+          }
+          return response()->json([
+            'success'=>true,
+            'response'=>$all_data
+            ],200);
+        }
+      }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+  }
+
+    public function fetchOrderItems(Request $request){
+      try{
+        $all_data = [];
+        if($this->user['role'] = 'seller'){
+          $orderd_item = OrderItems::where('order_id','=',$request->order_id)
+          ->join('users', 'users.id','=','user_id')
+          ->join('course','course.id','=','course_id')
+          ->select('order_id','course_id','user_id','users.full_name','course.course_title','course.course_description','course.course_banner','course.course_fee')
+          ->get();
+          $all_orderItems = [];
+          $total_price=0;
+          foreach($orderd_item as $item){
+            $all_orderItems = $item;
+            $total_price += $item['course_fee'];
+            array_push($all_data,$all_orderItems);
+          }
+          $all_orderItems['total_price'] = $total_price;
+          return response()->json([
+            'success'=>true,
+            'response'=>$all_data
+            ],200);
+        }
+      }catch(Exception $e){
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+    }
+
+    public function getSellerProducts(){
+      try{
+        $all_data = [];
+        if($this->user['role'] = 'seller'){
+          $get_products = Course::where('seller_id','=',$this->user['id'])
+          ->select('id','course_title','subject','category_id','created_at','course_fee')
+          ->get();
+          foreach($get_products as $products){
+            array_push($all_data,$products);
+          }
+          return response()->json([
+            'success'=>true,
+            'response'=>$all_data
+            ],200);
+        }
+      }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function soldProducts(){
+      try{
+        $all_seller_prod = [];
+        if($this->user['role'] = 'seller'){
+        $fetch_products = Course::where('seller_id','=',$this->user['id'])
+        ->select('id','course_title','course_fee')
+        ->get();
+        $products = [];
+        foreach($fetch_products as $product){
+            $enrolment_count = DB::table('enrollments')
+                 ->select('course_id', DB::raw('count(*) as total'))
+                 ->groupBy('course_id')
+                 ->get();
+            foreach($enrolment_count as $enroled){
+                    if($product['id'] == $enroled->course_id){
+                        $products['id'] = $product['id'];
+                        $products['course_title'] = $product['course_title'];
+                        $products['course_fee'] = $product['course_fee'];
+                        $products['total_sale'] = $enroled->total;
+                        $total_revenue = $product['course_fee'] * $enroled->total;
+                        $products['total_revenue'] = $total_revenue;
+                    }
+                }
+                array_push($all_seller_prod,$products);
+              }
+              if(sizeof($all_seller_prod)){
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$all_seller_prod
+                ],200);
+              }
+            }
+      }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function allBuyer(){
+      try{
+        $all_data = [];
+        if($this->user['role'] = 'seller'){
+          $all_buyer = OrderItems::where('seller_id','=',$this->user['id'])
+          ->join('users', 'users.id','=','user_id')
+          ->select('user_id','users.full_name','users.user_email')
+          ->get();
+        }
+        $all_user = [];
+        foreach($all_buyer as $key => $buyer){
+          
+          $all_user = $buyer;
+          array_push($all_data,$all_user);
+        }
+        if(sizeof($all_data)){
+          return response()->json([
+              'success'=>true,
+              'response'=>$all_data
+          ],200);
+        }
+      }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function viewProfile(Request $request){
+           try{
+            if($this->user['role'] = 'seller'){
+              $get_user = User::where('id','=',$request->user_id)
+              ->where('role','=','user')
+              ->get();
+              if(sizeof($get_user)){
+                return response()->json([
+                  'success'=>true,
+                  'response'=>$get_user
+                ],200);
+              }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'User does not exist';
+                    return response()->json($response, 403);
+              }
+            }
+           }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function fetchUserOrders(Request $request){
+           try{
+            if($this->user['role'] = 'seller'){
+              $response = [];
+              $basic_info = User::where('id','=',$request->user_id)
+              ->select('full_name','user_name','user_email','i_am_a')
+              ->get();
+          
+              $order = Order::where('user_id','=',$request->user_id)
+              ->select('id','created_at','status','total')
+              ->get();
+              if($basic_info && $order){
+                  $response['basic_info'] = $basic_info;
+                  $response['orderHistory'] = $order;
+                  return response()->json([
+                      'success'=>true,
+                      'response'=>$response
+                  ],200);
+              }
+              if(sizeof($orders)){
+                return response()->json([
+                  'success'=>true,
+                  'response'=>$orders
+                ],200);
+              }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'Order does not exist';
+                    return response()->json($response, 403);
+              }
+            }
+           }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function user_OrderItems(Request $request){
+      try{
+        $all_order_items =[];
+        $total_price =0;
+        $orderItems = [];
+            $Items = OrderItems::where('order_id','=',$request->order_id)
+            ->select('course_id','created_at','course_fee')
+            ->get()->toArray();
+            foreach($Items as $item){
+                $order = Order::where('id','=',$request->order_id)
+                ->select('status','transaction_id')
+                ->get()->toArray();
+                $orderItems['course_fee'] = $item['course_fee'];
+                $orderItems['created_at'] = $item['created_at'];
+                $orderItems['status'] = $order[0]['status'];
+                $orderItems['transaction_id'] = $order[0]['transaction_id'];
+                 $fetch_course_data = Course::where('id','=',$item['course_id'])
+                 ->select('course_banner','course_title','course_description')
+                 ->get()->toArray();
+                 $orderItems['course_banner'] = $fetch_course_data[0]['course_banner'];
+                 $orderItems['course_title'] = $fetch_course_data[0]['course_title'];
+                 $orderItems['course_description'] = $fetch_course_data[0]['course_description'];
+                 $total_price += $item['course_fee'];
+                 $all_order_items['total_price'] = $total_price;
+                 array_push($all_order_items,$orderItems);
+            }
+            return response()->json([
+                'success'=>true,
+                'response'=>$all_order_items
+            ],200);
+      }catch(Exception $e){
+                return $e;
+        }
+    }
+    public function sellerProfile(){
+      try{
+        if($this->user['role'] = 'seller'){
+          $user = User::where('id','=',$this->user['id'])
+          ->get();
+          if(sizeof($user)){
+            return response()->json([
+              'success'=>true,
+              'response'=>$user
+            ],200);
+          }else{
+                $response['status'] = 'error';
+                $response['message'] = 'User does not exist';
+                return response()->json($response, 403);
+          }
+        }
+      }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function updateBasicInfo(){
+
+    }
+ 
+    public function changePassword(Request $request){
+      try{
+        if($this->user['role'] = 'seller'){
+          $response=[];
+
+        if($request['current_password'] ==''){
+            $response['current_password']= 'Current password field is required';
+        }
+
+        if($request['password'] ==''){
+            $response['password']= 'password field is required';
+        }
+
+        if($request['confirm_password'] ==''){
+          $response['confirm_password']= 'confirm password field is required';
+        }
+         if(count($response)){
+            $data['status']= 'error';
+            $data['error']= 403;
+            $data['result']=$response;
+            return response()->json($data);
+         }else{
+          $credentials = $request->only($this->user['user_email'], $request->password);
+          $user_data =User::where('user_email','=',$this->user['user_email'])->first();
+           if($user_data){
+            $pass = Hash::check($request->current_password, $user_data->password);
+            if ($pass) {
+                $update_password =  User::where('user_email',$this->user['user_email'])->update([
+                    'password' => Hash::make($request->password),
+                    'updated_at' => Carbon::now()
+                  ]);
+                  if($update_password){
+                          $data['status']= 'success';
+                          $data['result']='Successfull change Password, Please Login with new password';
+                        return response()->json($data,200);
+                  }else{
+                    $data['status']= 'error';
+                    $data['error']= 400;
+                    $data['result']='Password is incorrect';
+                    return response()->json($data);
+                  }
+              } else {
+                $data['status']= 'error';
+                $data['error']= 400;
+                $data['result']='Password is incorrect';
+                return response()->json($data);
+              }
+           }
+         }
+        }
+      }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+    }
 }

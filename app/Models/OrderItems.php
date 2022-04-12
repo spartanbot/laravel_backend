@@ -14,6 +14,7 @@ class OrderItems extends Model
         'user_id',
         'course_id',
         'order_id',
+        'seller_id',
         'course_name',
         'course_fee',
     ];

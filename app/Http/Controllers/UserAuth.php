@@ -141,6 +141,7 @@ class UserAuth extends Controller
                     $role = 2;
                 }else{
                     $role = 3;
+                    $approved_by_admin = 0;
                 }
               $user = User::Create([
                 'full_name' => $request->full_name,
@@ -173,6 +174,7 @@ class UserAuth extends Controller
                 'course_ref_two_phonenumber' => $request->course_ref_two_phonenumber ?? null,
                 'token' => $Finaltoken,
                 'role' => $role,
+                'approved_by_admin' => $approved_by_admin,
                 'createdDate'  => date('H:i:s'),
                 'user_status' => 1,
             ]);

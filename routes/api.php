@@ -141,7 +141,28 @@ Route::post('/checkout',
  *****************************/
 Route::post('/add_bank', 
 [SellerDashboardController::class,'addBankAccount']);
-
+Route::get('/seller/top_products', 
+[SellerDashboardController::class,'topProducts']);
+Route::get('/seller/seller_order', 
+[SellerDashboardController::class,'fetchSellerOrder']);
+Route::post('/seller/get_order_items', 
+[SellerDashboardController::class,'fetchOrderItems']);
+Route::get('/seller/get_seller_products', 
+[SellerDashboardController::class,'getSellerProducts']);
+Route::get('/seller/sold_products', 
+[SellerDashboardController::class,'soldProducts']);
+Route::get('/seller/all_buyers', 
+[SellerDashboardController::class,'allBuyer']);
+Route::post('/seller/user_profile', 
+[SellerDashboardController::class,'viewProfile']);
+Route::post('/seller/user_orders', 
+[SellerDashboardController::class,'fetchUserOrders']);
+Route::post('/seller/user_order_items', 
+[SellerDashboardController::class,'user_OrderItems']);
+Route::get('/seller/seller_profile', 
+[SellerDashboardController::class,'sellerProfile']);
+Route::post('/seller/change_password', 
+[SellerDashboardController::class,'changePassword']);
 /******************************************************************************
  ****************************************route admin info related************
  *********************************************************************************
@@ -168,6 +189,20 @@ Route::get('/admin/seller_products',
 [AdminController::class,'sellerProducts']);
 Route::get('/admin/all_users', 
 [AdminController::class,'all_users']);
+Route::get('/admin/unapproved_sellers', 
+[AdminController::class,'unapproved_sellers']);
+Route::post('/admin/request_for_seller_approve', 
+[AdminController::class,'approvedRequest']);
+Route::get('/admin/approved_sellers', 
+[AdminController::class,'fetchApprovedSeller']);
+Route::post('/admin/request_for_seller_unapprove', 
+[AdminController::class,'unapprovedRequest']);
+Route::get('/admin/all_payments', 
+[AdminController::class,'allPayments']);
+Route::get('/admin/top_products', 
+[AdminController::class,'topProducts']);
+Route::get('/admin/top_seller', 
+[AdminController::class,'topSeller']);
 
  /******************************************************************************
  ****************************************route user basic info related************

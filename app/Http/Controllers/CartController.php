@@ -204,6 +204,7 @@ class CartController extends Controller
                     'user_id' => $this->user['id'],
                     'course_id' => $item['course_id'],
                     'order_id' => $orderId,
+                    'seller_id' => $item['seller_id'],
                     'course_name' => $item['course_name'],
                     'course_fee'=> $item['course_fee'],
                ]);

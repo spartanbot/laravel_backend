@@ -362,5 +362,190 @@ class AdminController extends Controller
             return $e;
         }
     }
+
+    public function unapproved_sellers(){
+        try{
+            if($this->user['role'] = 'admin'){
+                $all_unapproved_user = User::where('role','=','seller')
+                ->where('approved_by_admin','=',0)
+                ->select('id','full_name','user_name','user_email')
+                ->get();
+                if(sizeof($all_unapproved_user)){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>$all_unapproved_user
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function approvedRequest(Request $request)
+    {
+        try{
+            if($this->user['role'] = 'admin'){
+                $Update_approved_qry = User::where('id', $request->id)->update([
+                    'approved_by_admin' => 1,
+                ]);
+                if($Update_approved_qry){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>"Seller approved successfully"
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function fetchApprovedSeller(){
+         try{
+            if($this->user['role'] = 'admin'){
+                $all_approved_user = User::where('role','=','seller')
+                ->where('approved_by_admin','=',1)
+                ->select('id','full_name','user_name','user_email')
+                ->get();
+                if(sizeof($all_approved_user)){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>$all_approved_user
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function unapprovedRequest(Request $request){
+        try{
+            if($this->user['role'] = 'admin'){
+                $Update_unapproved_qry = User::where('id', $request->id)->update([
+                    'approved_by_admin' => 0,
+                ]);
+                if($Update_unapproved_qry){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>"Seller is unapproved successfully"
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function allPayments(){
+        try{
+            if($this->user['role'] = 'admin'){
+                $all_data = [];
+                $all_products =  DB::table('course')
+                ->join('users', 'users.id', '=', 'course.seller_id')
+                ->select('course.*', 'users.full_name')
+                ->get();
+                $products = [];
+                foreach($all_products as $product){
+                    $products['product_name']=$product->course_title;
+                    $products['product_price'] = $product->course_fee;
+                    $products['seller_name'] = $product->full_name;
+                    $enrolment_count = DB::table('enrollments')
+                     ->select('course_id', DB::raw('count(*) as total'))
+                     ->groupBy('course_id')
+                     ->get();
+                        foreach($enrolment_count as $enroled){
+                            if($product->id == $enroled->course_id){
+                                $products['qty'] = $enroled->total;
+                                $total_revenue = $product->course_fee * $enroled->total;
+                                $percentage = 30;
+                                $totalamount = $total_revenue;
+                                $transferAmount = ($percentage / 100) * $totalamount;
+                                $products['total_revenue'] = $total_revenue;
+                                $products['total_commission'] = $transferAmount;
+                            }
+                        }
+                    array_push($all_data,$products);
+                }
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$all_data
+                ],200);
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function topSeller(){
+        try{
+            if($this->user['role'] = 'admin'){
+                $all_data = [];
+                $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
+                ->groupBy('course_id')
+                ->orderBy('count', 'desc')
+                ->take(10)
+                ->get();
+                $top_seller = [];
+                foreach($all_topSELL as $top_sell){
+                    $top_seller['course_id'] = $top_sell['course_id'];
+                    $fetch_course_user = DB::table('course')
+                    ->join('users', 'users.id', '=', 'course.seller_id')
+                    ->where('course.id','=',$top_sell['course_id'])
+                    ->select('users.full_name','users.user_email','users.id')
+                    ->get();
+                    foreach($fetch_course_user as $user){
+                        $top_seller['id'] = $user->id;
+                        $top_seller['user_email'] = $user->user_email;
+                        $top_seller['full_name'] = $user->full_name;
+                    }
+                    array_push($all_data,$top_seller);
+                }
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$all_data
+                ],200);
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function topProducts(){
+        try{
+            if($this->user['role'] = 'admin'){
+                $all_data = [];
+                $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
+                ->groupBy('course_id')
+                ->orderBy('count', 'desc')
+                ->take(10)
+                ->get();
+                $top_sell_product = [];
+                foreach($all_topSELL as $top_sell){
+                    $top_sell_product['course_id'] = $top_sell['course_id'];
+                    $top_sell_product['total_sales'] = $top_sell['count'];
+                    $fetch_course = DB::table('course')
+                    ->join('users', 'users.id', '=', 'course.seller_id')
+                    ->where('course.id','=',$top_sell['course_id'])
+                    ->select('course_title','course_fee','users.full_name')
+                    ->get();
+                    foreach($fetch_course as $course){
+                        $top_sell_product['product_title'] = $course->course_title;
+                        $top_sell_product['product_fee'] = $course->course_fee;
+                        $top_sell_product['seller'] = $course->full_name;
+                        $top_sell_product['revenue'] = $course->course_fee * $top_sell->count;
+                    }
+                    array_push($all_data,$top_sell_product);
+                }
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$all_data
+                ],200);
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
     
 }
