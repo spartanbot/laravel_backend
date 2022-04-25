@@ -493,9 +493,53 @@ class SellerDashboardController extends Controller
               }
     }
 
-    public function updateBasicInfo(){
-
+    public function updateBasicInfo(Request $request){
+       try{
+        if($this->user['role'] = 'seller'){
+          $update_info =  User::where('user_email',$this->user['user_email'])->update([
+            'full_name' => $request->full_name,
+            'gender' => $request->gender,
+            'phone' => $request->phone
+          ]);
+        }
+        if($update_info){
+          $data['status']= 'success';
+          $data['result']='Successfull update info';
+          return response()->json($data,200);
+        }
+       }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
     }
+
+    public function teachingInfo(Request $request){
+      try{
+        if($this->user['role'] = 'seller'){
+          $update_info =  User::where('user_email',$this->user['user_email'])->update([
+            'i_am_a' => $request->i_am_a,
+            'location' => $request->location,
+            'preferred_language' => $request->preferred_language,
+            'affiliation' => $request->affiliation,
+            'age_group' => $request->age_group,
+            'subject' => $request->subject,
+          ]);
+        }
+        if($update_info){
+          $data['status']= 'success';
+          $data['result']='Successfull update teaching info';
+          return response()->json($data,200);
+        }
+       }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
  
     public function changePassword(Request $request){
       try{
