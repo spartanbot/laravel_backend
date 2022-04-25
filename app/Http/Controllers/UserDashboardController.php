@@ -6,11 +6,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 // use App\Models\UserBasicinfo;
 use App\Models\User;
+use App\Models\OrderItems;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
 class UserDashboardController extends Controller
 {
+  private $user;
+      
+   public function __construct(){
+         $this->user = JWTAuth::parseToken()->authenticate();
+   }
 
 public function createUserinfo(Request $request){
 
@@ -137,4 +143,108 @@ public function getAllUserinfo(Request $request){
          }
 
     }
+
+    public function buyerProfile(){
+        try{
+          if($this->user['role'] = 'user'){
+            $user = User::where('id','=',$this->user['id'])
+            ->get();
+            if(sizeof($user)){
+              return response()->json([
+                'success'=>true,
+                'response'=>$user
+              ],200);
+            }else{
+                  $response['status'] = 'error';
+                  $response['message'] = 'User does not exist';
+                  return response()->json($response, 403);
+            }
+          }
+        }catch(Exception $e){
+                  $error = $e->getMessage();
+                  $response['status'] = 'error';
+                  $response['message'] = $error;
+                  return response()->json($response, 403);
+                }
+      }
+
+        public function updateProfile(Request $request){
+          try{
+            if($this->user['role'] = 'user'){
+              $update_info =  User::where('user_email',$this->user['user_email'])->update([
+                'full_name' => $request->full_name,
+                'gender' => $request->gender,
+                'phone' => $request->phone
+              ]);
+            }
+            if($update_info){
+              $data['status']= 'success';
+              $data['result']='Successfull update info';
+              return response()->json($data,200);
+            }
+           }catch(Exception $e){
+                    $error = $e->getMessage();
+                    $response['status'] = 'error';
+                    $response['message'] = $error;
+                    return response()->json($response, 403);
+                  }
+        }
+  
+        public function changePassword(Request $request){
+          try{
+            if($this->user['role'] = 'user'){
+              $response=[];
+    
+            if($request['current_password'] ==''){
+                $response['current_password']= 'Current password field is required';
+            }
+    
+            if($request['password'] ==''){
+                $response['password']= 'password field is required';
+            }
+    
+            if($request['confirm_password'] ==''){
+              $response['confirm_password']= 'confirm password field is required';
+            }
+             if(count($response)){
+                $data['status']= 'error';
+                $data['error']= 403;
+                $data['result']=$response;
+                return response()->json($data);
+             }else{
+              $credentials = $request->only($this->user['user_email'], $request->password);
+              $user_data =User::where('user_email','=',$this->user['user_email'])->first();
+               if($user_data){
+                $pass = Hash::check($request->current_password, $user_data->password);
+                if ($pass) {
+                    $update_password =  User::where('user_email',$this->user['user_email'])->update([
+                        'password' => Hash::make($request->password),
+                        'updated_at' => Carbon::now()
+                      ]);
+                      if($update_password){
+                              $data['status']= 'success';
+                              $data['result']='Successfull change Password, Please Login with new password';
+                            return response()->json($data,200);
+                      }else{
+                        $data['status']= 'error';
+                        $data['error']= 400;
+                        $data['result']='Password is incorrect';
+                        return response()->json($data);
+                      }
+                  } else {
+                    $data['status']= 'error';
+                    $data['error']= 400;
+                    $data['result']='Password is incorrect';
+                    return response()->json($data);
+                  }
+               }
+             }
+            }
+          }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+          }
+        }
 }
