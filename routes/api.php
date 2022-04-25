@@ -16,6 +16,7 @@ use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\TestimonialController;
 
 
 /*
@@ -37,7 +38,9 @@ use App\Http\Controllers\AdminController;
  
 
 
-Route::post('/user_register', [UserAuth::class,'register']);
+Route::post('/seller_register', [UserAuth::class,'register']);
+Route::post('/buyer_register', [UserAuth::class,'userRegister']);
+
 Route::post('/user_login', [UserAuth::class,'login']);
 
 Route::get('auth/google', [UserAuth::class, 'redirectToGoogle']);
@@ -136,6 +139,20 @@ Route::post('/checkout',
 [CartController::class,'checkoutOrder']);
 
 /******************************************************************************
+ ****************************************route TestimonialController info related************
+ *********************************************************************************
+ *****************************/
+Route::post('/add_testimonial', 
+[TestimonialController::class,'createTestimonial']);
+Route::post('/edit_testimonial', 
+[TestimonialController::class,'editTestimonial']);
+Route::get('/all_testimonial', 
+[TestimonialController::class,'fetchAllTestimonial']);
+Route::post('/update_testimonial', 
+[TestimonialController::class,'updateTestimonial']);
+Route::post('/update_image', 
+[TestimonialController::class,'updateImage']);
+/******************************************************************************
  ****************************************route cart info related************
  *********************************************************************************
  *****************************/
@@ -163,6 +180,10 @@ Route::get('/seller/seller_profile',
 [SellerDashboardController::class,'sellerProfile']);
 Route::post('/seller/change_password', 
 [SellerDashboardController::class,'changePassword']);
+Route::post('/seller/update_profile_basicinfo', 
+[SellerDashboardController::class,'updateBasicInfo']);
+Route::post('/seller/update_profile_teachinginfo', 
+[SellerDashboardController::class,'teachingInfo']);
 /******************************************************************************
  ****************************************route admin info related************
  *********************************************************************************
@@ -220,6 +241,12 @@ Route::post('/userinfo_delete/{id}',
     [UserDashboardController::class,'deleteUserinfo']);
 Route::get('/all_userinfo', 
     [UserDashboardController::class,'getAllUserinfo']);
+Route::get('/buyer_profile', 
+    [UserDashboardController::class,'buyerProfile']);
+Route::post('/update_profile', 
+    [UserDashboardController::class,'updateProfile']);
+Route::post('/change_password', 
+    [UserDashboardController::class,'changePassword']);
 
 /*****************************************************************************************
 *****************************route Payment deatils****************************************

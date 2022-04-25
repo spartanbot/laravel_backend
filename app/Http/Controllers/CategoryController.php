@@ -24,6 +24,10 @@ class CategoryController extends Controller
         if($request['category_name'] ==''){
             $response['category_name']= 'Please enter category name';
         }
+
+        if($request['description'] ==''){
+            $response['description']= 'Please enter category description';
+        }
  
         if(count($response)){
             $response['status']= 'error';
@@ -39,6 +43,7 @@ class CategoryController extends Controller
               }else{
                 $category  =  Category::create([
                     'category_name' => $request->category_name,
+                    'description' => $request->description
                 ]);
                 if($category){
                     return response()->json([
@@ -99,6 +104,7 @@ public function updateCategory(Request $request){
         try {
             $UpdateCategory= Category::where('id', $request->id)->update([
                 'category_name' => $request->category_name,
+                'description' => $request->description
           ]);
           if($UpdateCategory){
             return response()->json([

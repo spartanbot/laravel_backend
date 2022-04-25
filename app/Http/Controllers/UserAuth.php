@@ -18,9 +18,9 @@ use Illuminate\Support\Facades\Mail;
 
 class UserAuth extends Controller
 {
-  public function __construct() {
-        $this->middleware('auth:api', ['except' => ['login', 'register','verify_user','forgot_password','reset_assword']]);
-  }
+//   public function __construct() {
+//         $this->middleware('auth:api', ['except' => ['login', 'register','buyer_register','verify_user','forgot_password','reset_assword']]);
+//   }
 
 
     public function sendEmail($email,$user_id,$token) 
@@ -57,6 +57,15 @@ class UserAuth extends Controller
         if($request['password'] ==''){
             $response['password']= 'Please enter password';
         }
+
+        if($request['phone'] ==''){
+            $response['phone']= 'Please enter phone number';
+        }
+        
+        if($request['gender'] ==''){
+            $response['gender']= 'Please enter gender';
+        }
+
         if($request['location'] ==''){
             $response['location']= 'Please enter location';
         }
@@ -80,36 +89,36 @@ class UserAuth extends Controller
             $response['age_group']= 'Please select group';
         }
 
-        if($request['talent'] ==''){
-            $response['talent']= 'Please select taslent';
+        // if($request['talent'] ==''){
+        //     $response['talent']= 'Please select taslent';
+        // }
+
+        if($request['organization'] ==''){
+            $response['organization']= 'Please Enter School/Organization';
         }
 
-        if($request['course_name'] ==''){
-            $response['course_name']= 'Please Enter School/Organization';
+        if($request['seller_ref_name'] ==''){
+            $response['seller_ref_name']= 'Please Enter 1 Name';
         }
 
-        if($request['course_ref_name'] ==''){
-            $response['course_ref_name']= 'Please Enter 1 Name';
+        if($request['seller_ref_email'] ==''){
+            $response['seller_ref_email']= 'Please Enter 1 Email';
         }
 
-        if($request['course_ref_email'] ==''){
-            $response['course_ref_email']= 'Please Enter 1 Email';
+        if($request['seller_ref_phonenumber'] ==''){
+            $response['seller_ref_phonenumber']= 'Please Enter 1 Phone number';
         }
 
-        if($request['course_ref_phonenumber'] ==''){
-            $response['course_ref_phonenumber']= 'Please Enter 1 Phone number';
+        if($request['seller_ref_two_name'] ==''){
+            $response['seller_ref_two_name']= 'Please Enter 2 Name';
         }
 
-        if($request['course_ref_two_name'] ==''){
-            $response['course_ref_two_name']= 'Please Enter 2 Name';
+        if($request['seller_ref_two_email'] ==''){
+            $response['seller_ref_two_email']= 'Please Enter 2 Email';
         }
 
-        if($request['course_ref_two_email'] ==''){
-            $response['course_ref_two_email']= 'Please Enter 2 Email';
-        }
-
-        if($request['course_ref_two_phonenumber'] ==''){
-            $response['course_ref_two_phonenumber']= 'Please Enter 2 Phone Number';
+        if($request['seller_ref_two_phonenumber'] ==''){
+            $response['seller_ref_two_phonenumber']= 'Please Enter 2 Phone Number';
         }
         
 
@@ -136,18 +145,15 @@ class UserAuth extends Controller
                 }
                 $random_number = rand(10,100000);
                 $Finaltoken = 'daatt'.$random_number.'token'.time();
-                $role = 2;
-                if(!$request->verify_seller){
-                    $role = 2;
-                }else{
-                    $role = 3;
-                    $approved_by_admin = 0;
-                }
+                $role = 3;
+                $approved_by_admin = 0;
               $user = User::Create([
                 'full_name' => $request->full_name,
                 'user_name' => $request->user_name,
                 'user_email' => $request->user_email,
                 'password' => Hash::make($request->password),
+                'phone' => $request->phone,
+                'gender' => $request->gender,
                 'location'=> $request->location,
                 'preferred_language'=> $request->preferred_language,
                 'i_am_a'=> $request->i_am_a,
@@ -195,6 +201,114 @@ class UserAuth extends Controller
             }
        }
       
+    }
+
+    public function userRegister(Request $request){
+        $response=[];
+
+        if($request['full_name'] ==''){
+            $response['full_name']= 'Please enter full name';
+        }
+
+        if($request['user_name'] ==''){
+            $response['user_name']= 'Please enter user name';
+        }
+
+        if($request['user_email'] ==''){
+            $response['user_email']= 'Please enter email address';
+        }
+
+        if($request['password'] ==''){
+            $response['password']= 'Please enter password';
+        }
+         
+        if($request['phone'] ==''){
+            $response['phone']= 'Please enter phone number';
+        }
+        
+        if($request['gender'] ==''){
+            $response['gender']= 'Please enter gender';
+        }
+
+        if($request['location'] ==''){
+            $response['location']= 'Please enter location';
+        }
+        if($request['preferred_language'] ==''){
+            $response['preferred_language']= 'Please enter preferred language';
+        }
+
+        if($request['i_am_a'] ==''){
+            $response['i_am_a']= 'This field is required';
+        }
+
+        if($request['affiliation'] ==''){
+            $response['affiliation']= 'Please select affiliation';
+        }
+
+        if($request['age_group'] ==''){
+            $response['age_group']= 'Please select age_group';
+        }
+
+        if($request['subject'] ==''){
+            $response['subject']= 'Please select subject';
+        }
+
+        if(count($response)){
+            $data['status']= 'error';
+            $data['error']= 403;
+            $data['result']= $response;
+            return response()->json($data);
+         }else{
+             try{
+                $get_result = User::where('user_email', '=', $request->user_email)->first();
+
+                if($get_result){
+                    $data['status']= 'error';
+                    $data['error']= 403;
+                    $data['result']= 'Already register with this Email';
+                    return response()->json($data);
+                 }else{
+                    $random_number = rand(10,100000);
+                    $Finaltoken = 'daatt'.$random_number.'token'.time();
+                    $role = 2;
+                    $user = User::Create([
+                        'full_name' => $request->full_name,
+                        'user_name' => $request->user_name,
+                        'user_email' => $request->user_email,
+                        'password' => Hash::make($request->password),
+                        'phone' => $request->phone,
+                        'gender' => $request->gender,
+                        'location'=> $request->location,
+                        'preferred_language'=> $request->preferred_language,
+                        'i_am_a'=> $request->i_am_a,
+                        'affiliation'=> $request->affiliation,
+                        'subject'=> $request->subject,
+                        'age_group'=> $request->age_group,
+                        'verified' => 0,
+                        'token' => $Finaltoken,
+                        'role' => $role,
+                        'createdDate'  => date('H:i:s'),
+                        'user_status' => 1,
+                    ]);
+
+                    if($user){
+                        $this->sendEmail($request->user_email,$user->id,$user->token);
+                      $data['status']= 201;
+                      $data['success']= 'User successfully register Please check for verified email!';
+                      $data['user']= $user;
+                      return response()->json($data);
+        
+                       }
+
+                 }
+             }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+                }
+         }
+
     }
     
      public function login(Request $request){
