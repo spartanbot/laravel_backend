@@ -11,6 +11,7 @@ use Socialite;
 use Auth;
 use Exception;
 use PDF;
+use JWTAuth;
 
 use App\Mail\ForgotMairest;
 use App\Mail\SendMailreset;
@@ -171,13 +172,13 @@ class UserAuth extends Controller
                 'resourse_two_email'  => $request->resourse_two_email ?? null,
                 'resourse_two_phonenumber'  => $request->resourse_two_phonenumber ?? null,
                 'verified' => 0,
-                'course_name' => $request->course_name ,
-                'course_ref_name' => $request->course_ref_name ?? null,
-                'course_ref_email' => $request->course_ref_email ?? null,
-                'course_ref_phonenumber' => $request->course_ref_phonenumber ?? null,
-                'course_ref_two_name' => $request->course_ref_two_name ?? null,
-                'course_ref_two_email' => $request->course_ref_two_email ?? null,
-                'course_ref_two_phonenumber' => $request->course_ref_two_phonenumber ?? null,
+                'organization' => $request->organization ,
+                'seller_ref_name' => $request->seller_ref_name ?? null,
+                'seller_ref_email' => $request->seller_ref_email ?? null,
+                'seller_ref_phonenumber' => $request->seller_ref_phonenumber ?? null,
+                'seller_ref_two_name' => $request->seller_ref_two_name ?? null,
+                'seller_ref_two_email' => $request->seller_ref_two_email ?? null,
+                'seller_ref_two_phonenumber' => $request->seller_ref_two_phonenumber ?? null,
                 'token' => $Finaltoken,
                 'role' => $role,
                 'approved_by_admin' => $approved_by_admin,
@@ -336,9 +337,11 @@ class UserAuth extends Controller
             $pass = Hash::check($request->password, $user_data->password);
             if ($pass) {
                 $token = Auth::guard('api')->attempt($credentials);
+                $user = JWTAuth::user();
                 if($token){
                     $data['status']= 201;
                     $data['access_token']= $token;
+                    $data['user_role']= $user['role'];
                     $data['token_type']= 'bearer';
                     $data['expires_in']= auth()->factory()->getTTL() * 60;
                     $data['result']='Successfull Login';

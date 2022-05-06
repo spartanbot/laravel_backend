@@ -47,6 +47,15 @@ class CourseController extends Controller
         if ($request['course_fee'] == '') {
             $response['course_fee'] = 'Please enter course fee';
         }
+        if ($request['affiliation'] == '') {
+            $response['affiliation'] = 'Please enter course affiliation';
+        }
+        if ($request['submission_type'] == '') {
+            $response['submission_type'] = 'Please enter course submission_type';
+        }
+        if ($request['difficulty'] == '') {
+            $response['difficulty'] = 'Please enter course difficulty';
+        }
         if (count($response)) {
             $response['status'] = 'error';
             return response()->json($response, 403);
@@ -91,8 +100,11 @@ class CourseController extends Controller
                             'course_banner' => 'banner'.$course_banner,
                             'course_content' => $filename,
                             'course_fee' => $request->course_fee,
+                            'affiliation'=> $request->affiliation,
+                            'submission_type' => $request->submission_type,
+                            'difficulty' => $request->difficulty,
                             'seller_id' => $this->user['id'],
-                            'verify' => 0,
+                            'verify' => 1,
                     ]);
                 if($course){
                     return response()->json([
@@ -127,6 +139,7 @@ class CourseController extends Controller
             ->select('language_name')
             ->where('id','=', $editCourse['language_id'])
             ->get();
+            $editCourse['course_content'] = '/uploads/'.$editCourse['course_content'];
             $editCourse['category_name'] = $catdata[0]->category_name;
             $editCourse['language_name'] = $langdata[0]->language_name;
             if($editCourse){
@@ -217,7 +230,15 @@ class CourseController extends Controller
                 if ($request['course_fee'] == '') {
                     $response['course_fee'] = 'Please enter course fee';
                 }
-               
+                if ($request['affiliation'] == '') {
+                    $response['affiliation'] = 'Please enter course affiliation';
+                }
+                if ($request['submission_type'] == '') {
+                    $response['submission_type'] = 'Please enter course submission_type';
+                }
+                if ($request['difficulty'] == '') {
+                    $response['difficulty'] = 'Please enter course difficulty';
+                }
                 if(count($response)){
                     $response['status']= 'error';
                     return response()->json($response,403);
@@ -233,6 +254,9 @@ class CourseController extends Controller
                             'course_banner' => $request->course_banner,
                             'course_content' => $request->course_content,
                             'course_fee' => $request->course_fee,
+                            'affiliation'=> $request->affiliation,
+                            'submission_type' => $request->submission_type,
+                            'difficulty' => $request->difficulty,
                             'seller_id' => $this->user['id'],
                             'verify' => 1,
                       ]);

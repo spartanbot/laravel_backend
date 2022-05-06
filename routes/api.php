@@ -150,7 +150,7 @@ Route::get('/all_testimonial',
 [TestimonialController::class,'fetchAllTestimonial']);
 Route::post('/update_testimonial', 
 [TestimonialController::class,'updateTestimonial']);
-Route::post('/update_image', 
+Route::post('/update_testimonal_image', 
 [TestimonialController::class,'updateImage']);
 /******************************************************************************
  ****************************************route cart info related************
