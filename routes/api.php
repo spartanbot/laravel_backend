@@ -17,6 +17,7 @@ use App\Http\Controllers\CourseController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TestimonialController;
+use App\Http\Controllers\StripeController;
 
 
 /*
@@ -56,7 +57,7 @@ Route::get('callback/google', [UserAuth::class, 'handleCallback']);
 Route::post('/forgot_password', [UserAuth::class, 'forgot_password']);
 Route::post('/reset_password', [UserAuth::class, 'reset_assword']);
 
-Route::group(['middleware' => 'auth:api'], function () {
+Route::group(['middleware' => 'jwt.verify'], function () {
 
 Route::get('/logout', [UserAuth::class, 'logout']);
 
@@ -224,8 +225,21 @@ Route::get('/admin/top_products',
 [AdminController::class,'topProducts']);
 Route::get('/admin/top_seller', 
 [AdminController::class,'topSeller']);
+Route::post('/admin/add_stripe_keys', 
+[AdminController::class,'addStripeKey']);
+Route::post('/admin/update_stripe_keys', 
+[AdminController::class,'updateStripeKeys']);
 
  /******************************************************************************
+ ****************************************route stripe basic info related************
+ *********************************************************************************
+ *****************************/
+
+Route::get('/fetch_stripe_publish_keys', 
+[StripeController::class,'fetchStripePublishKeys']);
+
+
+/******************************************************************************
  ****************************************route user basic info related************
  *********************************************************************************
  *****************************/
@@ -247,7 +261,12 @@ Route::post('/update_profile',
     [UserDashboardController::class,'updateProfile']);
 Route::post('/change_password', 
     [UserDashboardController::class,'changePassword']);
-
+Route::get('/user_all_order', 
+    [UserDashboardController::class,'user_allOrders']);
+Route::get('/user_all_products', 
+    [UserDashboardController::class,'All_user_Product']);
+Route::get('/user_succeeded_order', 
+    [UserDashboardController::class,'statusPaidOrders']);
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/

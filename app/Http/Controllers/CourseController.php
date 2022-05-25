@@ -106,6 +106,11 @@ class CourseController extends Controller
                             'seller_id' => $this->user['id'],
                             'verify' => 1,
                     ]);
+                    //notification
+                    $message = $this->user['full_name'].' is Added a new product '.$request->course_title;
+                    $navigate = new NavigationController();
+                    $navigate->createNotification(null,$this->user['id'],$message,1);
+                    
                 if($course){
                     return response()->json([
                         'status' => true,

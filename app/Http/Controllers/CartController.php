@@ -121,16 +121,8 @@ class CartController extends Controller
     }
 
     public function checkoutOrder(Request $request){
-
         try{
             if($this->user['role'] == 'seller' || 'user'){
-                // $paymetDetails  =  PaymentDetail::create([
-                //     'email' => $this->user['user_email'],
-                //     'user_id' => $this->user['id'],
-                //     'card_number' => $request->card_number,
-                //     'expiration' => $request->expiration,
-                //     'cart_holder_name' => $request->cart_holder_name,
-                // ]);
                 
                 $cartItems = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
                 if($cartItems){
@@ -139,12 +131,12 @@ class CartController extends Controller
                     if($Order){
                         $stripeObj = new StripeController;
                         $payDetails = $stripeObj->stripeCharges($request->token,$request->totalAmount);
-                        if($payDetails->balance_transaction){
+                        if($payDetails->balance_transaction && $payDetails->status =='succeeded'){
                             $this->transaction_id = $payDetails->balance_transaction;
                             $this->charge_id = $payDetails->id;
                             if($Order->id){
                                 $UpdateorderStatus = Order::where('id','=', $Order->id)->update([
-                                    'status' => "Paid",
+                                    'status' => $payDetails->status,
                                     'charge_id' => $payDetails->id,
                                     'transaction_id' => $payDetails->balance_transaction
                                 ]);
@@ -163,9 +155,23 @@ class CartController extends Controller
                                     return response()->json($response, 403);
                                 }
                             }
-                        }else{
+                        }elseif($payDetails->status =='failed'){
+                             Order::where('id','=', $Order->id)->update([
+                                'status' => $payDetails->status,
+                                'charge_id' => '####',
+                                'transaction_id' => '###'
+                            ]);
                             $response['status'] = 'error';
-                            $response['message'] = 'Something went wrong in payment.';
+                            $response['message'] = 'payment '.$payDetails->status;
+                            return response()->json($response, 403);
+                        }elseif($payDetails->status =='pending'){
+                            Order::where('id','=', $Order->id)->update([
+                                'status' => $payDetails->status,
+                                'charge_id' => '####',
+                                'transaction_id' => '###'
+                            ]);
+                            $response['status'] = 'error';
+                            $response['message'] = 'payment '.$payDetails->status;
                             return response()->json($response, 403);
                         }
                     }
@@ -180,7 +186,10 @@ class CartController extends Controller
                     return response()->json($response, 403);
             }
         }catch (Exception $e) {
-            return $e;
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
         }
     }
 
@@ -208,6 +217,11 @@ class CartController extends Controller
                     'course_name' => $item['course_name'],
                     'course_fee'=> $item['course_fee'],
                ]);
+               //navigation 
+               $message = $this->user['full_name'].' is Enrol in product '.$item['course_name'];
+               $navigate = new NavigationController();
+               $navigate->createNotification($this->user['id'],$item['seller_id'],$message,2);
+
                $this->calculateAndTransfer($item['course_fee'],$item['seller_id']);
                $ItemData['OrderItems'] = $OrderItem;
                $enrollments = $this->createEnrollment($item['course_id']);

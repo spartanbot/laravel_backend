@@ -25,7 +25,12 @@ class SellerDashboardController extends Controller
    }
 
    public function addBankAccount(Request $request){
-      \Stripe\Stripe::setApiKey(env('STRIPE_SECRET'));
+     //get stript key
+      $stripe_key = new StripeController();
+      $skey = $stripe_key->fetchStripeSecretKeys();
+      
+      //stripe 
+      \Stripe\Stripe::setApiKey($skey);
       $response=[];
 
       if($request['account_holder_name'] ==''){

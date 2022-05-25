@@ -9,20 +9,69 @@ use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\StripeKeys;
 
 class AdminController extends Controller
 {
     private $user;
       
-    public function __construct(){
-          $this->user = JWTAuth::parseToken()->authenticate();
+    // public function __construct(){
+    //       $this->user = JWTAuth::parseToken()->authenticate();
+    // }
+
+    public function addStripeKey(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+               $stripeKeys = StripeKeys::create([
+                    'publishable_key' => $request->publishable_key,
+                    'secret_key' => $request->secret_key,
+                ]);
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $stripeKeys
+                ],200);
+            }else{
+                $response['status'] = 'error';
+                $response['message'] = 'Only Admin can access!';
+                return response()->json($response, 403);
+            }
+        }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function updateStripeKeys(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+               $stripeKeys = StripeKeys::where('id', $request->id)->update([
+                'publishable_key' => $request->publishable_key,
+                'secret_key' => $request->secret_key,
+            ]);
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $stripeKeys
+                ],200);
+            }else{
+                $response['status'] = 'error';
+                $response['message'] = 'Only Admin can access!';
+                return response()->json($response, 403);
+            }
+        }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
     }
     
 
-    public function fetchAllOrders(){
+    public function fetchAllOrders(Request $request){
         $allOrder = [];
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $fetchallOrder = DB::table('order')
                 ->orderBy('id','asc')->get()->toArray();
                 $orderdata =[];
@@ -67,10 +116,10 @@ class AdminController extends Controller
         }
     }
 
-    public function fetchAllproduct(){
+    public function fetchAllproduct(Request $request){
         $allproducts = [];
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $fetchallcourse = DB::table('course')
                 ->join('users', 'users.id', '=', 'course.seller_id')
                 ->select('course.*', 'users.full_name')
@@ -79,6 +128,7 @@ class AdminController extends Controller
                 foreach($fetchallcourse as $product){
                     $products['product_name']=$product->course_title;
                     $products['product_price'] = $product->course_fee;
+                    $products['created_at'] = $product->created_at;
                     $products['seller_name'] = $product->full_name;
 
                     $enrolment_count = DB::table('enrollments')
@@ -116,7 +166,7 @@ class AdminController extends Controller
 
     public function singleProductPage(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $single_course = DB::table('course')                 
                              ->select('id','course_title','course_description','course_fee','course_banner','course_content')
                              ->where('id','=',$request->id)
@@ -137,11 +187,11 @@ class AdminController extends Controller
         }
     }
 
-    public function fetchBuyers(){
+    public function fetchBuyers(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $allBuyer =  User::where('role','=','user')
-            ->select('id','full_name','user_email')
+            ->select('id','full_name','user_email','created_at')
             ->get();
             if($allBuyer){
                 return response()->json([
@@ -161,7 +211,7 @@ class AdminController extends Controller
 
     public function viewUserProfile(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $profile = User::where('id','=',$request->id)->get();
                 if($profile){
                     return response()->json([
@@ -185,7 +235,7 @@ class AdminController extends Controller
 
     public function userOrderHistory(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $response = [];
             $basic_info = User::where('id','=',$request->id)
             ->select('full_name','user_name','user_email','i_am_a')
@@ -248,11 +298,12 @@ class AdminController extends Controller
     }
 
     //seller
-    public function fetchSellers(){
+    public function fetchSellers(Request $request){
+      
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $allsellers =  User::where('role','=','seller')
-            ->select('id','full_name','user_email')
+            ->select('id','full_name','user_email','created_at')
             ->get();
             if($allsellers){
                 return response()->json([
@@ -274,7 +325,7 @@ class AdminController extends Controller
 
     public function viewSellerProfile(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $profile = User::where('id','=',$request->id)
             ->where('role','=','seller')
             ->get();
@@ -301,7 +352,7 @@ class AdminController extends Controller
     public function sellerProducts(Request $request){
         try{
             $all_seller_prod = [];
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
             $fetch_products = Course::where('seller_id','=',$request->id)
             ->select('id','course_title','course_fee')
             ->get();
@@ -343,9 +394,9 @@ class AdminController extends Controller
         }
     }
 
-    public function all_users(){
+    public function all_users(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $all_user = User::all();
                 if(sizeof($all_user)){
                     return response()->json([
@@ -363,12 +414,12 @@ class AdminController extends Controller
         }
     }
 
-    public function unapproved_sellers(){
+    public function unapproved_sellers(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $all_unapproved_user = User::where('role','=','seller')
                 ->where('approved_by_admin','=',0)
-                ->select('id','full_name','user_name','user_email')
+                ->select('id','full_name','user_name','user_email','created_at')
                 ->get();
                 if(sizeof($all_unapproved_user)){
                     return response()->json([
@@ -385,7 +436,7 @@ class AdminController extends Controller
     public function approvedRequest(Request $request)
     {
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $Update_approved_qry = User::where('id', $request->id)->update([
                     'approved_by_admin' => 1,
                 ]);
@@ -401,12 +452,12 @@ class AdminController extends Controller
         }
     }
 
-    public function fetchApprovedSeller(){
+    public function fetchApprovedSeller(Request $request){
          try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $all_approved_user = User::where('role','=','seller')
                 ->where('approved_by_admin','=',1)
-                ->select('id','full_name','user_name','user_email')
+                ->select('id','full_name','user_name','user_email','created_at')
                 ->get();
                 if(sizeof($all_approved_user)){
                     return response()->json([
@@ -422,7 +473,7 @@ class AdminController extends Controller
 
     public function unapprovedRequest(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $Update_unapproved_qry = User::where('id', $request->id)->update([
                     'approved_by_admin' => 0,
                 ]);
@@ -438,9 +489,9 @@ class AdminController extends Controller
         }
     }
 
-    public function allPayments(){
+    public function allPayments(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $all_data = [];
                 $all_products =  DB::table('course')
                 ->join('users', 'users.id', '=', 'course.seller_id')
@@ -478,27 +529,26 @@ class AdminController extends Controller
         }
     }
 
-    public function topSeller(){
+    public function topSeller(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
                 $all_data = [];
-                $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
-                ->groupBy('course_id')
+                $all_topSELL = OrderItems::select('seller_id', DB::raw('COUNT(seller_id) as count'))
+                ->groupBy('seller_id')
                 ->orderBy('count', 'desc')
                 ->take(10)
                 ->get();
                 $top_seller = [];
                 foreach($all_topSELL as $top_sell){
-                    $top_seller['course_id'] = $top_sell['course_id'];
-                    $fetch_course_user = DB::table('course')
-                    ->join('users', 'users.id', '=', 'course.seller_id')
-                    ->where('course.id','=',$top_sell['course_id'])
-                    ->select('users.full_name','users.user_email','users.id')
+                    $fetch_course_user = DB::table('users')
+                    ->where('id','=',$top_sell['seller_id'])
+                    ->select('full_name','user_email','id','created_at')
                     ->get();
                     foreach($fetch_course_user as $user){
                         $top_seller['id'] = $user->id;
                         $top_seller['user_email'] = $user->user_email;
                         $top_seller['full_name'] = $user->full_name;
+                        $top_seller['created_at'] = $user->created_at;
                     }
                     array_push($all_data,$top_seller);
                 }
@@ -512,9 +562,44 @@ class AdminController extends Controller
         }
     }
 
-    public function topProducts(){
+    public function oldtopSeller(Request $request){
         try{
-            if($this->user['role'] = 'admin'){
+            if($request->user['role'] == 'admin'){
+                $all_data = [];
+                $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
+                ->groupBy('course_id')
+                ->orderBy('count', 'desc')
+                ->take(10)
+                ->get();
+                $top_seller = [];
+                foreach($all_topSELL as $top_sell){
+                    $top_seller['course_id'] = $top_sell['course_id'];
+                    $fetch_course_user = DB::table('course')
+                    ->join('users', 'users.id', '=', 'course.seller_id')
+                    ->where('course.id','=',$top_sell['course_id'])
+                    ->select('users.full_name','users.user_email','users.id','users.created_at')
+                    ->get();
+                    foreach($fetch_course_user as $user){
+                        $top_seller['id'] = $user->id;
+                        $top_seller['user_email'] = $user->user_email;
+                        $top_seller['full_name'] = $user->full_name;
+                        $top_seller['created_at'] = $user->created_at;
+                    }
+                    array_push($all_data,$top_seller);
+                }
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$all_data
+                ],200);
+            }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function topProducts(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
                 $all_data = [];
                 $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
                 ->groupBy('course_id')
@@ -528,11 +613,12 @@ class AdminController extends Controller
                     $fetch_course = DB::table('course')
                     ->join('users', 'users.id', '=', 'course.seller_id')
                     ->where('course.id','=',$top_sell['course_id'])
-                    ->select('course_title','course_fee','users.full_name')
+                    ->select('course_title','course_fee','course.created_at','users.full_name')
                     ->get();
                     foreach($fetch_course as $course){
                         $top_sell_product['product_title'] = $course->course_title;
                         $top_sell_product['product_fee'] = $course->course_fee;
+                        $top_sell_product['created_at'] = $course->created_at;
                         $top_sell_product['seller'] = $course->full_name;
                         $top_sell_product['revenue'] = $course->course_fee * $top_sell->count;
                     }

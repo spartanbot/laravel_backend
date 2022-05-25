@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Models\OrderItems;
 use JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use DB;
 
 class UserDashboardController extends Controller
 {
@@ -247,4 +248,105 @@ public function getAllUserinfo(Request $request){
             return response()->json($response, 403);
           }
         }
+
+  public function user_allOrders(){
+          try{
+              if($this->user['role'] == 'user'){
+                  $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
+                  ->join('order_item', 'order_item.order_id', '=', 'order.id')
+                  ->join('course','course.id','=','order_item.course_id')
+                  ->join('users','users.id','=','order_item.seller_id')
+                  ->select('order.id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
+                  ->get();
+                  if($fetchallOrder){
+                      return response()->json([
+                          'success'=>true,
+                          'response'=>$fetchallOrder
+                      ],200);
+                  }else{
+                      $response['status'] = 'error';
+                      $response['message'] = 'somthing went wrong';
+                      return response()->json($response, 403);
+                  }
+              }else{
+                  $response['status'] = 'error';
+                  $response['message'] = 'Only User can use Fetch All Order';
+                  return response()->json($response, 403);
+              }
+          }catch(Exception $e) {
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+          }
+    }
+
+    public function All_user_Product(){
+      try{
+          if($this->user['role'] == 'user'){
+              $fetchallcourse = DB::table('enrollments')->where('user_id','=',$this->user['id'])
+              ->join('course', 'course.id', '=', 'enrollments.course_id')
+              ->join('users','users.id','=','course.seller_id')
+              ->select('course.course_title','course.course_banner','course.course_description','course.course_fee','course.created_at','enrollments.course_id','users.full_name')
+              ->get();
+              
+              if($fetchallcourse){
+                  return response()->json([
+                      'success'=>true,
+                      'response'=>$fetchallcourse
+                  ],200);
+              }else{
+                  $response['status'] = 'error';
+                  $response['message'] = 'somthing went wrong';
+                  return response()->json($response, 403);
+              }
+          }else{
+              $response['status'] = 'error';
+              $response['message'] = 'Only User can use Fetch All Order';
+              return response()->json($response, 403);
+          }
+      }catch(Exception $e) {
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+  }
+
+  public function statusPaidOrders(){
+          try{
+            $multipleItems = [];
+            if($this->user['role'] == 'user'){
+                $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
+                ->where('order.status','=','succeeded')
+                ->join('order_item', 'order_item.order_id', '=', 'order.id')
+                ->join('course','course.id','=','order_item.course_id')
+                ->join('users','users.id','=','order_item.seller_id')
+                ->select('order.id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
+                ->get()->toArray();
+                
+
+                if($fetchallOrder){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>$fetchallOrder
+                    ],200);
+                }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'somthing went wrong';
+                    return response()->json($response, 403);
+                }
+            }else{
+                $response['status'] = 'error';
+                $response['message'] = 'Only User can use Fetch All Order';
+                return response()->json($response, 403);
+            }
+        }catch(Exception $e) {
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+  }
+
 }
