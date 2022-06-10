@@ -12,6 +12,8 @@ use Auth;
 use Exception;
 use PDF;
 use JWTAuth;
+use Tymon\JWTAuth\PayloadFactory;
+use JWTFactory;
 
 use App\Mail\ForgotMairest;
 use App\Mail\SendMailreset;
@@ -336,7 +338,7 @@ class UserAuth extends Controller
         if($user_data){
             $pass = Hash::check($request->password, $user_data->password);
             if ($pass) {
-                $token = Auth::guard('api')->attempt($credentials);
+                $token = JWTAuth::claims(['uid'=>$user_data->id,'email'=>$user_data->user_email,'role' => $user_data->role])->attempt($credentials);
                 $user = JWTAuth::user();
                 if($token){
                     $data['status']= 201;
@@ -641,8 +643,6 @@ class UserAuth extends Controller
      }
     }
 
-    
-    
 
 }
 

@@ -9,7 +9,10 @@ use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Category;
+use App\Models\Testimonal;
 use App\Models\StripeKeys;
+use Carbon\Carbon;
 
 class AdminController extends Controller
 {
@@ -633,5 +636,324 @@ class AdminController extends Controller
             return $e;
         }
     }
+
+    public function orderToday(Request $request)
+    {
+        try{
+            if($request->user['role'] == 'admin'){
+            $response=[];
+            $ordertoday = DB::table('order')
+            ->where(DB::raw("(DATE_FORMAT(order.created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+            ->get();
+            $count = $ordertoday->count();
+            $response['TodayOrder']= $count;
+            return response()->json([
+                'success'=>true,
+                'response'=> $response
+            ],200);
+            }else{
+                $data['status']= 'error';
+                $data['error']= 400;
+                $data['result']='only admin can access!';
+                return response()->json($data);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+
+    }
+
+    public function todaySales(Request $request)
+    {
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $response=[];
+                $todaySeller = DB::table('order')
+                ->where(DB::raw("(DATE_FORMAT(order.created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+                ->get();
+                $sum= $todaySeller->sum('total');
+                $response['today_sales'] = $sum;
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $response
+                ],200);
+            }else{
+                $data['status']= 'error';
+                $data['error']= 400;
+                $data['result']='only admin can access!';
+                return response()->json($data);
+            }
+            
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function totalRevenue(Request $request)
+    {
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $response=[];
+                $totalrevenue = Order::all();
+                $sum = $totalrevenue->sum('total');
+                $response['total_revenue'] = $sum;
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $response
+                ],200);
+            }else{
+                $data['status'] = 'error';
+                $data['error'] = 400;
+                $data['result'] ='only admin can access!';
+                return response()->json($data);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+//graph
+    public function getSellersCountByMonth(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $users = User::where('role','seller')
+                    ->whereBetween('created_at',array($request->start_date,$request->end_date))
+                    ->get()
+                    ->groupBy(function ($date){
+                        return Carbon::parse($date->created_at)->format('m');
+                    });
+
+                $usermcount = [];
+                $userArr = [];
+
+                foreach ($users as $key => $value) {
+                    $usermcount[(int)$key] = count($value);
+                }
+
+                $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                for ($i = 1; $i <= 12; $i++) {
+                    if (!empty($usermcount[$i])) {
+                        $userArr[$i]['count'] = $usermcount[$i];
+                    } else {
+                        $userArr[$i]['count'] = 0;
+                    }
+                    $userArr[$i]['month'] = $month[$i - 1];
+                }
+
+                return response()->json(array_values($userArr),200);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+   //graph
+    public function getUserCountByMonth(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $users = User::where('role','user')
+                     ->whereBetween('created_at',array($request->start_date,$request->end_date))
+                    ->get()
+                    ->groupBy(function ($date) {
+                        return Carbon::parse($date->created_at)->format('m');
+                    });
+
+                $usermcount = [];
+                $userArr = [];
+
+                foreach ($users as $key => $value) {
+                    $usermcount[(int)$key] = count($value);
+                }
+
+                $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                for ($i = 1; $i <= 12; $i++) {
+                    if (!empty($usermcount[$i])) {
+                        $userArr[$i]['count'] = $usermcount[$i];
+                    } else {
+                        $userArr[$i]['count'] = 0;
+                    }
+                    $userArr[$i]['month'] = $month[$i - 1];
+                }
+
+                return response()->json(array_values($userArr),200);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function deleteUser(Request $request)
+    {
+        try{
+            $ids = $request->ids;
+            $delete = User::whereIn('id',$ids)->delete();
+            if($delete){
+                return response()->json([
+                    'success'=>true,
+                    'response'=> 'User deleted !'
+                ],200);
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function OrderDeleteAction(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+                $ids = $request->order_ids;
+                $orderItems = OrderItems::whereIn('order_id',$ids)->delete();
+                if($orderItems){
+                    $order = Order::whereIn('id',$ids)->delete();
+                    if($order){
+                        return response()->json([
+                            'success'=>true,
+                            'response'=> 'Order deleted !'
+                        ],200);
+                    }
+                }else{
+                    $orderstatus = Order::whereIn('id',$ids)->delete();
+                    if($orderstatus){
+                        return response()->json([
+                            'success'=>true,
+                            'response'=> 'Order deleted !'
+                        ],200);
+                    }
+                }
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function productDelete(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+                $ids = $request->order_ids;
+                $product = Course::whereIn('id',$ids)->delete();
+                if($product){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=> 'Product deleted !'
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function categoryDelete(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+                $ids = $request->order_ids;
+                $category = Category::whereIn('id',$ids)->delete();
+                if($category){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=> 'Category deleted !'
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function testimonialDelete(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+                $ids = $request->order_ids;
+                $testimonal = Testimonal::whereIn('id',$ids)->delete();
+                if($testimonal){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=> 'Testimonal deleted !'
+                    ],200);
+                }
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
     
+         //graph
+    public function saleOverview(Request $request){
+        try{
+            // Carbon::setWeekStartsAt(Carbon::SUNDAY);
+            // Carbon::setWeekEndsAt(Carbon::SATURDAY);
+            //Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()
+            if($request->user['role'] == 'admin'){
+                $byweek = Order::select(DB::raw("(COUNT(*)) as count"),DB::raw("DAYNAME(created_at) as dayname"))
+                ->whereBetween('created_at', [$request->start_date,$request->end_date])
+                //->whereMonth('created_at', date('M'))
+                ->groupBy('dayname')
+                ->get();
+               $sumoforder =  Order::whereBetween('created_at', [$request->start_date,$request->end_date])
+                ->sum('total');
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $byweek,
+                    'week_earning' => $sumoforder
+                ],200);
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+    //graph
+    public function orderOverview(Request $request){
+        try{
+            if($request->user['role'] == 'admin'){
+               // Order::
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
 }

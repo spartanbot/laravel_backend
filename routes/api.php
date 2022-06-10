@@ -18,6 +18,8 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\StripeController;
+use App\Http\Controllers\RatingReviewController;
+use App\Http\Controllers\NavigationController;
 
 
 /*
@@ -185,6 +187,12 @@ Route::post('/seller/update_profile_basicinfo',
 [SellerDashboardController::class,'updateBasicInfo']);
 Route::post('/seller/update_profile_teachinginfo', 
 [SellerDashboardController::class,'teachingInfo']);
+Route::get('/seller/seller_notifications', 
+[NavigationController::class,'seller_notification']);
+Route::get('/user/user_notification', 
+[NavigationController::class,'get_user_notification']);
+
+
 /******************************************************************************
  ****************************************route admin info related************
  *********************************************************************************
@@ -229,7 +237,28 @@ Route::post('/admin/add_stripe_keys',
 [AdminController::class,'addStripeKey']);
 Route::post('/admin/update_stripe_keys', 
 [AdminController::class,'updateStripeKeys']);
-
+Route::get('/admin/today_orders', 
+[AdminController::class,'orderToday']);
+Route::get('/admin/today_sales', 
+[AdminController::class,'todaySales']);
+Route::get('/admin/total_revenue', 
+[AdminController::class,'totalRevenue']);
+Route::get('/admin/get_seller_count_by_month', 
+[AdminController::class,'getSellersCountByMonth']);
+Route::get('/admin/get_user_count_by_month', 
+[AdminController::class,'getUserCountByMonth']);
+Route::post('/admin/delete_users', 
+    [AdminController::class,'deleteUser']);
+Route::post('/admin/delete_order', 
+    [AdminController::class,'OrderDeleteAction']);
+Route::post('/admin/delete_product', 
+    [AdminController::class,'productDelete']);
+Route::post('/admin/delete_category', 
+    [AdminController::class,'categoryDelete']);
+Route::post('/admin/delete_testimonial', 
+    [AdminController::class,'testimonialDelete']);
+Route::post('/admin/sale_overview', 
+    [AdminController::class,'saleOverview']);
  /******************************************************************************
  ****************************************route stripe basic info related************
  *********************************************************************************
@@ -245,7 +274,7 @@ Route::get('/fetch_stripe_publish_keys',
  *****************************/
  
  
- Route::post('/userinfo_create', 
+Route::post('/userinfo_create', 
     [UserDashboardController::class,'createUserinfo']);
 Route::post('/userinfo_update', 
     [UserDashboardController::class,'updateUserinfo']);
@@ -267,6 +296,17 @@ Route::get('/user_all_products',
     [UserDashboardController::class,'All_user_Product']);
 Route::get('/user_succeeded_order', 
     [UserDashboardController::class,'statusPaidOrders']);
+Route::post('/user/add_rate_review', 
+    [RatingReviewController::class,'create_Rating']);
+Route::post('/user/get_course_Rating_Review', 
+    [RatingReviewController::class,'get_course_Rating_Review']);
+Route::post('/user/course_rating_average', 
+    [RatingReviewController::class,'course_rating_avg']);
+Route::post('/user/course_total_rate_review', 
+    [RatingReviewController::class,'totalRating']);
+Route::post('/user/course_rating_progress_count', 
+    [RatingReviewController::class,'ratingProgressBar']);
+   
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/
