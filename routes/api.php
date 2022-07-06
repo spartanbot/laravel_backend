@@ -20,6 +20,7 @@ use App\Http\Controllers\TestimonialController;
 use App\Http\Controllers\StripeController;
 use App\Http\Controllers\RatingReviewController;
 use App\Http\Controllers\NavigationController;
+use App\Http\Controllers\SubscribeController;
 
 
 /*
@@ -37,8 +38,15 @@ use App\Http\Controllers\NavigationController;
 //     return $request->user();
 // });
 
-// // Here admin route
- 
+ // Here admin route
+
+
+ /******************************************************************************
+ ****************************************route subscribe info related************
+ *********************************************************************************
+ *****************************/
+
+Route::post('/subscribe', [SubscribeController::class, 'createSubscribe']);
 
 
 Route::post('/seller_register', [UserAuth::class,'register']);
@@ -192,7 +200,27 @@ Route::get('/seller/seller_notifications',
 Route::get('/user/user_notification', 
 [NavigationController::class,'get_user_notification']);
 
+//graph api for seller
+ 
+Route::get('/seller/total_products', 
+[SellerDashboardController::class,'total_products']);
+Route::get('/seller/sold_products', 
+[SellerDashboardController::class,'products_sold']);
+Route::get('/seller/total_order', 
+[SellerDashboardController::class,'total_order']);
+Route::post('/seller/total_sales', 
+[SellerDashboardController::class,'getTotalOrderCountByMonth']);
+Route::get('/seller/today_sales', 
+[SellerDashboardController::class,'todaySales']);
 
+// graph section for productPage
+
+Route::get('/seller/total_sales_order_profit', 
+ [SellerDashboardController::class,'totalSalesOrderAndProfit']);
+Route::get('/seller/today_sales_product_section', 
+ [SellerDashboardController::class,'todaySalesProductSection']);
+ Route::get('/seller/total_product_sold_product', 
+ [SellerDashboardController::class,'totalProductAndProductSold']);
 /******************************************************************************
  ****************************************route admin info related************
  *********************************************************************************
@@ -259,6 +287,16 @@ Route::post('/admin/delete_testimonial',
     [AdminController::class,'testimonialDelete']);
 Route::post('/admin/sale_overview', 
     [AdminController::class,'saleOverview']);
+Route::post('/admin/order_overview', 
+    [AdminController::class,'orderOverview']);
+Route::post('/admin/get_subscriber_count_by_month', 
+    [AdminController::class,'getSubscriberCountByMonth']);
+Route::post('/admin/today_order', 
+    [AdminController::class,'todayOrder']);
+Route::post('/admin/total_order', 
+    [AdminController::class,'TotalOrderCountByMonth']);
+Route::post('/admin/resourse_count_by_month', 
+    [AdminController::class,'resourseCounting']);
  /******************************************************************************
  ****************************************route stripe basic info related************
  *********************************************************************************

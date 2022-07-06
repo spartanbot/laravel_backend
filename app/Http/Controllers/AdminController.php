@@ -12,6 +12,7 @@ use App\Models\Course;
 use App\Models\Category;
 use App\Models\Testimonal;
 use App\Models\StripeKeys;
+use App\Models\Subscribe;
 use Carbon\Carbon;
 
 class AdminController extends Controller
@@ -947,7 +948,14 @@ class AdminController extends Controller
     public function orderOverview(Request $request){
         try{
             if($request->user['role'] == 'admin'){
-               // Order::
+                $byweek = Order::select(DB::raw("(COUNT(*)) as count"),DB::raw("DATE_FORMAT(created_at,  '%d-%b') as date"))
+                ->whereBetween('created_at', [$request->start_date,$request->end_date])
+                ->groupBy('date')
+                ->get();
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $byweek
+                ],200);
             }
         }catch(Exception $e){
             $error = $e->getMessage();
@@ -956,4 +964,180 @@ class AdminController extends Controller
             return response()->json($response, 403);
         }
     }
+
+    //graph
+    public function getSubscriberCountByMonth(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $users = Subscribe::whereBetween('created_at',array($request->start_date,$request->end_date))
+                    ->get()
+                    ->groupBy(function ($date) {
+                        return Carbon::parse($date->created_at)->format('m');
+                    });
+
+                $usermcount = [];
+                $userArr = [];
+
+                foreach ($users as $key => $value) {
+                    $usermcount[(int)$key] = count($value);
+                }
+
+                $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                for ($i = 1; $i <= 12; $i++) {
+                    if (!empty($usermcount[$i])) {
+                        $userArr[$i]['count'] = $usermcount[$i];
+                    } else {
+                        $userArr[$i]['count'] = 0;
+                    }
+                    $userArr[$i]['month'] = $month[$i - 1];
+                }
+
+                return response()->json(array_values($userArr),200);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
+    public function resourseCounting(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $users = Course::whereBetween('created_at',array($request->start_date,$request->end_date))
+                    ->get()
+                    ->groupBy(function ($date) {
+                        return Carbon::parse($date->created_at)->format('m');
+                    });
+
+                $usermcount = [];
+                $userArr = [];
+
+                foreach ($users as $key => $value) {
+                    $usermcount[(int)$key] = count($value);
+                }
+
+                $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+                for ($i = 1; $i <= 12; $i++) {
+                    if (!empty($usermcount[$i])) {
+                        $userArr[$i]['count'] = $usermcount[$i];
+                    } else {
+                        $userArr[$i]['count'] = 0;
+                    }
+                    $userArr[$i]['month'] = $month[$i - 1];
+                }
+
+                return response()->json(array_values($userArr),200); 
+            }
+        }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+            }
+    }
+
+    public function todayOrder(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                //Get all data for the day
+                // $all_data = Order::whereDate('created_at',date('Y-m-d'))
+                // ->select(DB::raw("(COUNT(*)) as count"),DB::raw("DATE_FORMAT(created_at,  '%h %i') as hourly"))
+                // ->groupBy('hourly')
+                // ->get();
+                // return response()->json([
+                //     'success'=>true,
+                //     'response'=> $all_data
+                // ],200);
+
+                // $all_data = Order::whereDate('created_at',date('Y-m-d'))
+                // ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m-%d")'), DB::raw('count(*) as applications'))
+                // ->groupByRaw('DATE_FORMAT(created_at, "%Y-%m-%d")')
+                // ->get();
+                // return response()->json([
+                //         'success'=>true,
+                //         'response'=> $all_data
+                //     ],200);
+
+                // $all_data = Order::whereDate('created_at',date('Y-m-d'))->get();
+                // //Recursive to groupBy hours
+                // $i=1;
+                // while ($all_data->last() != null){
+                //     $hourly_data = Order::where('created_at','=',Carbon::today()->addHours($i))->get();
+                //     $all_data= $all_data->merge($hourly_data);
+                // $i++;
+                // }
+                // return response()->json($all_data,200);
+
+                    $today_Order_time=DB::table('order')
+                      ->where(DB::raw("(DATE_FORMAT(order.created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+                      ->select('created_at',DB::raw('hour(created_at) as time')
+                      ,DB::raw('COUNT(*) as count'))->groupBy('time','created_at')->get();
+                      $newdata=array();
+                      foreach($today_Order_time as $valdata)
+                      {
+                          $newdata[]=['time'=>date('h:i:a',strtotime($valdata->created_at)),
+                          'count'=> $valdata->count];
+                      }
+                      return response()->json([
+                          'success'=>true,
+                          'response'=>$newdata
+                      ],200);
+            }
+        }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+            }
+    }
+
+    public function TotalOrderCountByMonth(Request $request){
+        try{
+            if($request->user['role'] == 'admin')
+            {
+                $users = OrderItems::whereBetween('created_at',array($request->start_date,$request->end_date))
+                    ->get()
+                    ->groupBy(function ($date) {
+                        return Carbon::parse($date->created_at)->format('m');
+                    });
+                    $total_sales = OrderItems::whereBetween('created_at',array($request->start_date,$request->end_date))
+                                   ->sum('course_fee');
+  
+                $usermcount = [];
+                $userArr = [];
+  
+                foreach ($users as $key => $value) {
+                    $usermcount[(int)$key] = count($value);
+                }
+  
+                $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  
+                for ($i = 1; $i <= 12; $i++) {
+                    if (!empty($usermcount[$i])) {
+                        $userArr[$i]['count'] = $usermcount[$i];
+                    } else {
+                        $userArr[$i]['count'] = 0;
+                    }
+                    $userArr[$i]['month'] = $month[$i - 1];
+                }
+                $userArr[]['total_sales'] = $total_sales;
+                return response()->json(array_values($userArr),200);
+            }
+        }
+        catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+  
 }

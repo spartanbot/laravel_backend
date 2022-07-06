@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItems;
 use App\Models\User;
 use App\Models\Course;
+use App\Models\Ratereview;
 use Auth;
 use JWTAuth;
 use DB;
@@ -188,6 +189,7 @@ class SellerDashboardController extends Controller
         $all_data = [];
         $fetch_course = DB::table('course')
             ->where('seller_id','=',$this->user['id'])
+            // ->join('ratereview', 'ratereview.course_id','=','id')
             ->select('id','course_title','course_fee')
             ->get();
           $top_sell_product = [];
@@ -195,6 +197,7 @@ class SellerDashboardController extends Controller
             $top_sell_product['id'] = $top_sell->id;
             $top_sell_product['course_title'] = $top_sell->course_title;
             $top_sell_product['course_fee'] = $top_sell->course_fee;
+            // $top_sell_product['rating'] = $top_sell->rating;
             $all_topSELL = OrderItems::where('course_id','=',$top_sell->id)
             ->select('course_id', DB::raw('COUNT(course_id) as count'))
             ->groupBy('course_id')
@@ -603,4 +606,230 @@ class SellerDashboardController extends Controller
         return response()->json($response, 403);
       }
     }
+    //graph api
+    public function total_products(Request $request){
+     try{
+      if($this->user['role'] = 'seller'){
+        $products = Course::where('seller_id',$this->user['id'])->get();
+        $total_products = $products->count();
+        $response['total_products'] = $total_products;
+                return response()->json([
+                    'success'=>true,
+                    'response'=> $response
+                ],200);
+      }
+     }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+    }
+
+    public function products_sold(Request $request){
+      try{
+       if($this->user['role'] = 'seller'){
+         $productsSold = Course::where('seller_id',$this->user['id'])
+                    ->join('enrollments', 'enrollments.course_id', '=', 'course.id')
+                    ->get();
+         $totalSold_products = $productsSold->count();
+         $response['sold_products'] = $totalSold_products;
+                 return response()->json([
+                     'success'=>true,
+                     'response'=> $response
+                 ],200);
+       }
+      }catch(Exception $e){
+         $error = $e->getMessage();
+         $response['status'] = 'error';
+         $response['message'] = $error;
+         return response()->json($response, 403);
+       }
+     }
+
+     public function total_order(Request $request){
+      try{
+       if($this->user['role'] = 'seller'){
+         $orderItem = OrderItems::where('seller_id',$this->user['id'])
+                    ->get();
+         $order_products = $orderItem->count();
+         $response['total_order'] = $order_products;
+                 return response()->json([
+                     'success'=>true,
+                     'response'=> $response
+                 ],200);
+       }
+      }catch(Exception $e){
+         $error = $e->getMessage();
+         $response['status'] = 'error';
+         $response['message'] = $error;
+         return response()->json($response, 403);
+       }
+     }
+
+     public function getTotalOrderCountByMonth(Request $request){
+      try{
+          if($request->user['role'] == 'seller')
+          {
+              $users = OrderItems::where('seller_id',$this->user['id'])
+                   ->whereBetween('created_at',array($request->start_date,$request->end_date))
+                  ->get()
+                  ->groupBy(function ($date) {
+                      return Carbon::parse($date->created_at)->format('m');
+                  });
+                  $total_sales = OrderItems::where('seller_id',$this->user['id'])
+                                ->whereBetween('created_at',array($request->start_date,$request->end_date))
+                                 ->sum('course_fee');
+
+              $usermcount = [];
+              $userArr = [];
+
+              foreach ($users as $key => $value) {
+                  $usermcount[(int)$key] = count($value);
+              }
+
+              $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+              for ($i = 1; $i <= 12; $i++) {
+                  if (!empty($usermcount[$i])) {
+                      $userArr[$i]['count'] = $usermcount[$i];
+                  } else {
+                      $userArr[$i]['count'] = 0;
+                  }
+                  $userArr[$i]['month'] = $month[$i - 1];
+              }
+              $userArr[]['total_sales'] = $total_sales;
+              return response()->json(array_values($userArr),200);
+          }
+      }
+      catch(Exception $e){
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+      }
+  }
+
+  public function todaySales(Request $request){
+    try{
+        if($request->user['role'] == 'seller')
+        {
+                $today_Order_time=DB::table('order_item')
+                  ->where(DB::raw("(DATE_FORMAT(order_item.created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+                  ->select('created_at',DB::raw('hour(created_at) as time')
+                  ,DB::raw('COUNT(*) as count'))->groupBy('time','created_at')->get();
+                    $newdata=array();
+                    foreach($today_Order_time as $valdata)
+                    {
+                        $newdata[]=['time'=>date('h:i:a',strtotime($valdata->created_at)),
+                        'count'=> $valdata->count];
+                    }
+                    if(empty($newdata)){
+                      return response()->json([
+                        'success'=>true,
+                        'response'=> 'No oreder found !'
+                       ],200);
+                    }else{
+                      return response()->json([
+                        'success'=>true,
+                        'response'=>$newdata
+                    ],200);
+                  }
+        }
+    }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+   }
+ // for product page sections
+   public function totalSalesOrderAndProfit(Request $request){
+    try{
+      if($request->user['role'] == 'seller')
+      {
+        $newdata=[];
+          $sales = OrderItems::where('seller_id',$request->user['id'])
+                   ->sum('course_fee');
+                   $percentage = 30;
+                   $net_profit = ($percentage / 100) * $sales;
+                  $newdata['Total_sales']  =  $sales;
+                  $newdata['Total_profit']  = $net_profit;
+                  
+           $count_order = OrderItems::where('seller_id',$request->user['id'])->get();
+           $order_products = $count_order->count();
+           $newdata['Total_order']  =  $order_products;
+
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$newdata
+                ],200);   
+      }
+      }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+   }
+
+   public function todaySalesProductSection(Request $request){
+    try{
+      if($request->user['role'] == 'seller')
+      {
+        $newdata=[];
+          $sales = OrderItems::where('seller_id',$request->user['id'])
+                  ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+                   ->sum('course_fee');
+                   $percentage = 30;
+                   $net_profit = ($percentage / 100) * $sales;
+                  $newdata['Today_sales']  =  $sales;
+                  $newdata['Today_profit']  = $net_profit;
+
+           $count_order = OrderItems::where('seller_id',$request->user['id'])
+                        ->where(DB::raw("(DATE_FORMAT(created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
+                        ->get();
+           $order_products = $count_order->count();
+           $newdata['Today_order']  =  $order_products;
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$newdata
+                ],200);   
+      }
+      }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+   }
+
+   public function totalProductAndProductSold(Request $request){
+    try{
+      if($request->user['role'] == 'seller')
+        {
+          $data = [];
+           $product = Course::where('seller_id',$request->user['id'])->get();
+           $total_product = $product->count();
+           $data['Total_Products'] = $total_product;
+           if($total_product){
+            $soldProduct = Course::where('seller_id',$request->user['id'])
+                       ->join('enrollments','enrollments.course_id','=','course.id')
+                       ->get();
+              $data['Sold_Products'] = $soldProduct->count();
+           }
+           return response()->json([
+            'success'=>true,
+            'response'=>$data
+           ],200);
+        }
+      }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+      }
+   }
+
+     
 }
