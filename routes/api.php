@@ -21,6 +21,7 @@ use App\Http\Controllers\StripeController;
 use App\Http\Controllers\RatingReviewController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubscribeController;
+use App\Http\Controllers\VisitorController;
 
 
 /*
@@ -47,7 +48,7 @@ use App\Http\Controllers\SubscribeController;
  *****************************/
 
 Route::post('/subscribe', [SubscribeController::class, 'createSubscribe']);
-
+Route::post('/add_visitor', [VisitorController::class, 'createVisitor']);
 
 Route::post('/seller_register', [UserAuth::class,'register']);
 Route::post('/buyer_register', [UserAuth::class,'userRegister']);
@@ -297,6 +298,12 @@ Route::post('/admin/total_order',
     [AdminController::class,'TotalOrderCountByMonth']);
 Route::post('/admin/resourse_count_by_month', 
     [AdminController::class,'resourseCounting']);
+
+/******************************************************************************
+ ****************************************route visitor basic info related************
+ *********************************************************************************
+ *****************************/
+    Route::get('/admin/get_today_visitor', [VisitorController::class, 'getTodayVisitor']);
  /******************************************************************************
  ****************************************route stripe basic info related************
  *********************************************************************************
