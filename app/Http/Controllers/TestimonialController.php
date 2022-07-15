@@ -99,22 +99,6 @@ class TestimonialController extends Controller
     
     }
 
-    public function fetchAllTestimonial(){
-        try{
-            $fetchallTestimonial = DB::table('testimonal')->get();
-            foreach($fetchallTestimonial as $testimonal){
-                 $testimonal->image = '/uploads/'.$testimonal->image;
-            }
-            if($fetchallTestimonial){
-                return response()->json([
-                    'success'=>true,
-                    'response'=>$fetchallTestimonial
-                ],200);
-            }
-           }catch(Exception $e){
-              return "error";
-           }
-    }
 
     public function updateTestimonial(Request $request){
 

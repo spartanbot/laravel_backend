@@ -169,13 +169,39 @@ public function getAllUserinfo(Request $request){
                 }
       }
 
-        public function updateProfile(Request $request){
+        public function updateProfileBasicInfo(Request $request){
           try{
             if($this->user['role'] = 'user'){
               $update_info =  User::where('user_email',$this->user['user_email'])->update([
                 'full_name' => $request->full_name,
                 'gender' => $request->gender,
                 'phone' => $request->phone
+              ]);
+            }
+            if($update_info){
+              $data['status']= 'success';
+              $data['result']='Successfull update info';
+              return response()->json($data,200);
+            }
+           }catch(Exception $e){
+                    $error = $e->getMessage();
+                    $response['status'] = 'error';
+                    $response['message'] = $error;
+                    return response()->json($response, 403);
+                  }
+        }
+        
+
+        public function updateTeachingSettingsProfile(Request $request){
+          try{
+            if($this->user['role'] = 'user'){
+              $update_info =  User::where('user_email',$this->user['user_email'])->update([
+                'i_am_a' => $request->i_am_a,
+                'location' => $request->location,
+                'preferred_language' => $request->preferred_language,
+                'affiliation' => $request->affiliation,
+                'age_group' => $request->age_group,
+                'subject' => $request->subject
               ]);
             }
             if($update_info){
@@ -256,7 +282,7 @@ public function getAllUserinfo(Request $request){
                   ->join('order_item', 'order_item.order_id', '=', 'order.id')
                   ->join('course','course.id','=','order_item.course_id')
                   ->join('users','users.id','=','order_item.seller_id')
-                  ->select('order.id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
+                  ->select('order.id as order_id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
                   ->get();
                   if($fetchallOrder){
                       return response()->json([

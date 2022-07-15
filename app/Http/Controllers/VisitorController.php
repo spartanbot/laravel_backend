@@ -8,15 +8,18 @@ class VisitorController extends Controller
 {
    public function createVisitor(Request $request){
       try{
-        $visitData = Visitor::create([
-            'ip' => $request->ip,
-            'browser_info' => $request->browser_info
-        ]);
-        if($visitData){
-            return response()->json([
-                'status' => true,
-                'responce' => $visitData
-            ], 200);
+        $get_result = Visitor::where('ip', '=', $request->ip)->first();
+        if(!$get_result){
+            $visitData = Visitor::create([
+                'ip' => $request->ip,
+                'browser_info' => serialize($request->browser_info)
+            ]);
+            if($visitData){
+                return response()->json([
+                    'status' => true,
+                    'responce' => $visitData
+                ], 200);
+            }
         }
       }catch(Exception $e){
             $error = $e->getMessage();

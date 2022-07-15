@@ -481,7 +481,10 @@ class SellerDashboardController extends Controller
       try{
         if($this->user['role'] = 'seller'){
           $user = User::where('id','=',$this->user['id'])
-          ->get();
+          ->get(); 
+          foreach($user as $data){
+            $data->user_profile = asset('/uploads/'.$data->user_profile);
+          }
           if(sizeof($user)){
             return response()->json([
               'success'=>true,

@@ -175,6 +175,10 @@ class AdminController extends Controller
                              ->select('id','course_title','course_description','course_fee','course_banner','course_content')
                              ->where('id','=',$request->id)
                              ->get();
+                             foreach($single_course as $course){
+                                $course->course_banner = asset('/uploads/course_banner/'.$course->course_banner);
+                                $course->course_content = asset('/uploads/'.$course->course_content);
+                             }
                 if($single_course){
                     return response()->json([
                         'success'=>true,

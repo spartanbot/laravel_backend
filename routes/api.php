@@ -22,6 +22,7 @@ use App\Http\Controllers\RatingReviewController;
 use App\Http\Controllers\NavigationController;
 use App\Http\Controllers\SubscribeController;
 use App\Http\Controllers\VisitorController;
+use App\Http\Controllers\FrontendController;
 
 
 /*
@@ -34,44 +35,45 @@ use App\Http\Controllers\VisitorController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+/******************************************************************************
+ ****************************************route FrontendController  info related************
+ *********************************************************************************
+ *****************************/
 
-// Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-//     return $request->user();
-// });
-
- // Here admin route
-
+Route::post('/frontend_resourse_list', [FrontendController::class, 'allfrontendResourse']);
+Route::get('/all_testimonial', 
+[FrontendController::class,'fetchAllTestimonial']);
 
  /******************************************************************************
- ****************************************route subscribe info related************
+ ****************************************route subscribe and visitor info related************
  *********************************************************************************
  *****************************/
 
 Route::post('/subscribe', [SubscribeController::class, 'createSubscribe']);
 Route::post('/add_visitor', [VisitorController::class, 'createVisitor']);
 
+
+ /******************************************************************************
+ ****************************************route UserAuth info related************
+ *********************************************************************************
+ *****************************/
+
 Route::post('/seller_register', [UserAuth::class,'register']);
 Route::post('/buyer_register', [UserAuth::class,'userRegister']);
-
 Route::post('/user_login', [UserAuth::class,'login']);
-
 Route::get('auth/google', [UserAuth::class, 'redirectToGoogle']);
 Route::get('callback/google', [UserAuth::class, 'handleCallback']);
-
-//Route::get('/user/verify/{token}', [UserAuth::class,'verify_user'])->name('verify');
-
-// Route::get('/user/verify/{token}', [VerifyRegisterUserController::class,'verifyUser']);
-
-// Route::post('forgot-password', [ResetPasswordController::class, 'forgot_password']);
-// Route::post('reset-password/{token}', [ResetPasswordController::class, 'reset_assword']);
-
 Route::post('/forgot_password', [UserAuth::class, 'forgot_password']);
 Route::post('/reset_password', [UserAuth::class, 'reset_assword']);
+
+
+
+//middleware 
 
 Route::group(['middleware' => 'jwt.verify'], function () {
 
 Route::get('/logout', [UserAuth::class, 'logout']);
-
+Route::post('/upload_user_profile_image', [UserAuth::class, 'uploadProfileImage']);
 
 
 /******************************************************************
@@ -158,8 +160,6 @@ Route::post('/add_testimonial',
 [TestimonialController::class,'createTestimonial']);
 Route::post('/edit_testimonial', 
 [TestimonialController::class,'editTestimonial']);
-Route::get('/all_testimonial', 
-[TestimonialController::class,'fetchAllTestimonial']);
 Route::post('/update_testimonial', 
 [TestimonialController::class,'updateTestimonial']);
 Route::post('/update_testimonal_image', 
@@ -328,18 +328,22 @@ Route::post('/userinfo_edit/{id}',
 Route::post('/userinfo_delete/{id}', 
     [UserDashboardController::class,'deleteUserinfo']);
 Route::get('/all_userinfo', 
-    [UserDashboardController::class,'getAllUserinfo']);
-Route::get('/buyer_profile', 
+    [UserDashboardController::class,'getAllUserinfo']); 
+Route::get('/user/buyer_profile', 
     [UserDashboardController::class,'buyerProfile']);
-Route::post('/update_profile', 
-    [UserDashboardController::class,'updateProfile']);
+Route::post('/user/update_basic_info_profile', 
+    [UserDashboardController::class,'updateProfileBasicInfo']);
+Route::post('/user/update_teaching_setting_profile', 
+    [UserDashboardController::class,'updateTeachingSettingsProfile']);
 Route::post('/change_password', 
     [UserDashboardController::class,'changePassword']);
-Route::get('/user_all_order', 
-    [UserDashboardController::class,'user_allOrders']);
-Route::get('/user_all_products', 
+Route::get('/user/user_all_products', 
     [UserDashboardController::class,'All_user_Product']);
-Route::get('/user_succeeded_order', 
+
+Route::get('/user/user_all_order', 
+    [UserDashboardController::class,'user_allOrders']);
+
+Route::get('/user/user_succeeded_order', 
     [UserDashboardController::class,'statusPaidOrders']);
 Route::post('/user/add_rate_review', 
     [RatingReviewController::class,'create_Rating']);
@@ -351,7 +355,6 @@ Route::post('/user/course_total_rate_review',
     [RatingReviewController::class,'totalRating']);
 Route::post('/user/course_rating_progress_count', 
     [RatingReviewController::class,'ratingProgressBar']);
-   
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/

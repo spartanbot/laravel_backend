@@ -643,6 +643,34 @@ class UserAuth extends Controller
      }
     }
 
+    public function uploadProfileImage(Request $request){
+          try{
+            if($request->hasFile('user_profile')){
+                $file = $request->file('user_profile');
+                    $filename = time().$file->getClientOriginalName();
+                    $path = public_path().'/uploads/';
+                    $file->move($path, $filename);
+            if($filename){
+                $users_update = User::where('id',$request->user['id'])
+                ->update([
+                'user_profile' => $filename
+                ]);
+                if($users_update){
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'profile is updated!.'
+                    ],200);
+                }
+            }
+          }
+          }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+    }
+
 
 }
 

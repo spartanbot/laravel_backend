@@ -52,6 +52,7 @@ class User extends Authenticatable implements JWTSubject
         'seller_ref_two_phonenumber',
         'token',
         'role',
+        'user_profile',
         'approved_by_admin',
         'createdDate',
         'user_status',
