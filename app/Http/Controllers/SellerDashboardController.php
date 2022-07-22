@@ -261,6 +261,7 @@ class SellerDashboardController extends Controller
     public function fetchOrderItems(Request $request){
       try{
         $all_data = [];
+        $images = [];
         if($this->user['role'] = 'seller'){
           $orderd_item = OrderItems::where('order_id','=',$request->order_id)
           ->join('users', 'users.id','=','user_id')
@@ -270,6 +271,8 @@ class SellerDashboardController extends Controller
           $all_orderItems = [];
           $total_price=0;
           foreach($orderd_item as $item){
+            $images = explode(",",$item->course_banner);
+            $item->course_banner = asset('/uploads/course_banner/'.$images[0]);
             $all_orderItems = $item;
             $total_price += $item['course_fee'];
             array_push($all_data,$all_orderItems);
@@ -448,6 +451,7 @@ class SellerDashboardController extends Controller
         $all_order_items =[];
         $total_price =0;
         $orderItems = [];
+        $images = [];
             $Items = OrderItems::where('order_id','=',$request->order_id)
             ->select('course_id','created_at','course_fee')
             ->get()->toArray();
@@ -462,7 +466,9 @@ class SellerDashboardController extends Controller
                  $fetch_course_data = Course::where('id','=',$item['course_id'])
                  ->select('course_banner','course_title','course_description')
                  ->get()->toArray();
-                 $orderItems['course_banner'] = $fetch_course_data[0]['course_banner'];
+                 $images = explode(",",$fetch_course_data[0]['course_banner']);
+
+                 $orderItems['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                  $orderItems['course_title'] = $fetch_course_data[0]['course_title'];
                  $orderItems['course_description'] = $fetch_course_data[0]['course_description'];
                  $total_price += $item['course_fee'];

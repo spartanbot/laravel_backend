@@ -43,7 +43,8 @@ use App\Http\Controllers\FrontendController;
 Route::post('/frontend_resourse_list', [FrontendController::class, 'allfrontendResourse']);
 Route::get('/all_testimonial', 
 [FrontendController::class,'fetchAllTestimonial']);
-
+Route::post('/contact_us', [FrontendController::class, 'contactUs']);
+Route::post('/frontend_search', [FrontendController::class, 'globalSearch']);
  /******************************************************************************
  ****************************************route subscribe and visitor info related************
  *********************************************************************************
@@ -138,6 +139,10 @@ Route::post('/update_course_publish_status',
 [CourseController::class,'updatePublishStatus']);
 Route::get('/all_resourse', 
 [CourseController::class,'fetchAllResourse']);
+Route::post('/add_course_content', 
+[CourseController::class,'addCoursecontent']);
+Route::post('/add_course_gallery', 
+[CourseController::class,'addCourseBanner']);
 
 /******************************************************************************
  ****************************************route cart info related************
@@ -355,6 +360,8 @@ Route::post('/user/course_total_rate_review',
     [RatingReviewController::class,'totalRating']);
 Route::post('/user/course_rating_progress_count', 
     [RatingReviewController::class,'ratingProgressBar']);
+Route::post('/user/product_detail_rate_page', 
+    [UserDashboardController::class,'product_details_rate_page']);
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/

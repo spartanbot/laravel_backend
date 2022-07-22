@@ -171,12 +171,14 @@ class AdminController extends Controller
     public function singleProductPage(Request $request){
         try{
             if($request->user['role'] == 'admin'){
+                $images = [];
             $single_course = DB::table('course')                 
                              ->select('id','course_title','course_description','course_fee','course_banner','course_content')
                              ->where('id','=',$request->id)
                              ->get();
                              foreach($single_course as $course){
-                                $course->course_banner = asset('/uploads/course_banner/'.$course->course_banner);
+                                $images = explode(",",$course->course_banner);
+                                $course->course_banner = asset('/uploads/course_banner/'.$images[0]);
                                 $course->course_content = asset('/uploads/'.$course->course_content);
                              }
                 if($single_course){
@@ -273,6 +275,7 @@ class AdminController extends Controller
     public function userOrderItem(Request $request){
       try{
         $all_order_items =[];
+        $images = [];
         $total_price =0;
         $orderItems = [];
             $Items = OrderItems::where('order_id','=',$request->order_id)
@@ -289,7 +292,8 @@ class AdminController extends Controller
                  $fetch_course_data = Course::where('id','=',$item['course_id'])
                  ->select('course_banner','course_title','course_description')
                  ->get()->toArray();
-                 $orderItems['course_banner'] = $fetch_course_data[0]['course_banner'];
+                 $images = explode(",",$fetch_course_data[0]['course_banner']);
+                 $orderItems['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                  $orderItems['course_title'] = $fetch_course_data[0]['course_title'];
                  $orderItems['course_description'] = $fetch_course_data[0]['course_description'];
                  $total_price += $item['course_fee'];

@@ -150,6 +150,9 @@ public function getAllUserinfo(Request $request){
           if($this->user['role'] = 'user'){
             $user = User::where('id','=',$this->user['id'])
             ->get();
+            foreach($user as $data){
+              $data->user_profile = asset('/uploads/'.$data->user_profile);
+            }
             if(sizeof($user)){
               return response()->json([
                 'success'=>true,
@@ -277,13 +280,18 @@ public function getAllUserinfo(Request $request){
 
   public function user_allOrders(){
           try{
+            $images = [];
               if($this->user['role'] == 'user'){
                   $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
                   ->join('order_item', 'order_item.order_id', '=', 'order.id')
                   ->join('course','course.id','=','order_item.course_id')
                   ->join('users','users.id','=','order_item.seller_id')
-                  ->select('order.id as order_id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
+                  ->select('order.id as order_id','order.transaction_id','order.status','order.created_at','course.course_title','course.id as course_id','course.course_fee','course.course_description','course.course_banner','users.full_name')
                   ->get();
+                  foreach($fetchallOrder as $allOrder){
+                    $images = explode(",",$allOrder->course_banner);
+                    $allOrder->course_banner = asset('/uploads/course_banner/'.$images[0]);
+                  }
                   if($fetchallOrder){
                       return response()->json([
                           'success'=>true,
@@ -309,13 +317,18 @@ public function getAllUserinfo(Request $request){
 
     public function All_user_Product(){
       try{
+        $images = [];
           if($this->user['role'] == 'user'){
               $fetchallcourse = DB::table('enrollments')->where('user_id','=',$this->user['id'])
               ->join('course', 'course.id', '=', 'enrollments.course_id')
               ->join('users','users.id','=','course.seller_id')
-              ->select('course.course_title','course.course_banner','course.course_description','course.course_fee','course.created_at','enrollments.course_id','users.full_name')
+              ->select('course.course_title','course.course_banner','course.course_description','course.course_content','course.course_fee','course.created_at','enrollments.course_id','users.full_name')
               ->get();
-              
+              foreach($fetchallcourse as $allCourse){
+                $images = explode(",",$allCourse->course_banner);
+                $allCourse->course_banner = asset('/uploads/course_banner/'.$images[0]);
+                $allCourse->course_content = asset('/uploads/'.$allCourse->course_content);
+              }
               if($fetchallcourse){
                   return response()->json([
                       'success'=>true,
@@ -342,6 +355,7 @@ public function getAllUserinfo(Request $request){
   public function statusPaidOrders(){
           try{
             $multipleItems = [];
+            $images = [];
             if($this->user['role'] == 'user'){
                 $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
                 ->where('order.status','=','succeeded')
@@ -350,8 +364,10 @@ public function getAllUserinfo(Request $request){
                 ->join('users','users.id','=','order_item.seller_id')
                 ->select('order.id','order.transaction_id','order.status','order.created_at','order.total','course.course_title','course.course_description','course.course_banner','users.full_name')
                 ->get()->toArray();
-                
-
+                foreach($fetchallOrder as $allOrder){
+                  $images = explode(",",$allOrder->course_banner);
+                  $allOrder->course_banner = asset('/uploads/course_banner/'.$images[0]);
+                }
                 if($fetchallOrder){
                     return response()->json([
                         'success'=>true,
@@ -368,6 +384,32 @@ public function getAllUserinfo(Request $request){
                 return response()->json($response, 403);
             }
         }catch(Exception $e) {
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+  }
+
+  public function product_details_rate_page(Request $request){
+    try{
+     $details =  DB::table('course')->where('id','=',$request->course_id)
+                    ->select('id','course_title','course_banner')->get();
+                    foreach($details as $detail){
+                      $images = explode(",",$detail->course_banner);
+                      $detail->course_banner = asset('/uploads/course_banner/'.$images[0]);
+                      $getpoprating = DB::table('ratereview')->where('course_id',$detail->id)->get()->avg('rating');
+                      if($getpoprating){
+                        $detail->rating = $getpoprating;
+                       }else{
+                        $detail->rating = 0;
+                       }
+                    }
+                return response()->json([
+                  'success'=>true,
+                  'response'=>$details
+              ],200);
+    }catch(Exception $e){
           $error = $e->getMessage();
           $response['status'] = 'error';
           $response['message'] = $error;

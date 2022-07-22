@@ -5,12 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use DB;
 use Carbon\Carbon;
+use App\Mail\Contactusmail;
+use Illuminate\Support\Facades\Mail;
+use App\Models\Course;
+use App\Models\User;
 
 class FrontendController extends Controller
 {
   
     public function allfrontendResourse(Request $request){
         try{
+            $images = [];
                   if($request->populer && $request->new === false ){
                     $fetchallpopular = DB::table('course')
                     ->join('users','users.id','=','course.seller_id')
@@ -19,7 +24,8 @@ class FrontendController extends Controller
                     ->orderBy('id','asc')->get()->toArray();
                     if($fetchallpopular){
                         foreach($fetchallpopular as $popular){
-                            $popular->course_banner = asset('/uploads/course_banner/'.$popular->course_banner);
+                            $images = explode(",",$popular->course_banner);
+                            $popular->course_banner = asset('/uploads/course_banner/'.$images[0]);
                             $popular->user_profile = asset('/uploads/'.$popular->user_profile);
                             $getpoprating = DB::table('ratereview')->where('course_id',$popular->id)->get()->avg('rating');
                            if($getpoprating){
@@ -38,7 +44,8 @@ class FrontendController extends Controller
                             ->select('course.id','course.course_title','course.course_banner','course.grade_label','course.course_fee','users.full_name as seller_name','users.user_profile')
                             ->orderBy('id','asc')->get()->toArray();
                             foreach($fetchallproducts as $resourse){
-                                $resourse->course_banner = asset('/uploads/course_banner/'.$resourse->course_banner);
+                                $images = explode(",",$resourse->course_banner);
+                                $resourse->course_banner = asset('/uploads/course_banner/'.$images[0]);
                                 $popular->user_profile = asset('/uploads/'.$popular->user_profile);
                                 $getrating = DB::table('ratereview')->where('course_id',$resourse->id)->get()->avg('rating');
                             if($getrating){
@@ -61,7 +68,8 @@ class FrontendController extends Controller
                     ->orderBy('id','asc')->get()->toArray();
                     if($fetchallnew){
                         foreach($fetchallnew as $newdata){
-                            $newdata->course_banner = asset('/uploads/course_banner/'.$newdata->course_banner);
+                            $images = explode(",",$newdata->course_banner);
+                            $newdata->course_banner = asset('/uploads/course_banner/'.$images[0]);
                             $popular->user_profile = asset('/uploads/'.$popular->user_profile);
                             $getnewRating = DB::table('ratereview')->where('course_id',$newdata->id)->get()->avg('rating');
                            if($getnewRating){
@@ -80,7 +88,8 @@ class FrontendController extends Controller
                         ->select('course.id','course.course_title','course.course_banner','course.grade_label','course.course_fee','users.full_name as seller_name','users.user_profile')
                         ->orderBy('id','asc')->get()->toArray();
                         foreach($fetchallproducts as $resourse){
-                            $resourse->course_banner = asset('/uploads/course_banner/'.$resourse->course_banner);
+                            $images = explode(",",$resourse->course_banner);
+                            $resourse->course_banner = asset('/uploads/course_banner/'.$images[0]);
                             $popular->user_profile = asset('/uploads/'.$popular->user_profile);
                             $getrating = DB::table('ratereview')->where('course_id',$resourse->id)->get()->avg('rating');
                         if($getrating){
@@ -101,7 +110,8 @@ class FrontendController extends Controller
                     ->select('course.id','course.course_title','course.course_banner','course.grade_label','course.course_fee','users.full_name as seller_name','users.user_profile')
                     ->orderBy('id','asc')->get()->toArray();
                     foreach($fetchallproducts as $resourse){
-                        $resourse->course_banner = asset('/public/uploads/course_banner/'.$resourse->course_banner);
+                        $images = explode(",",$resourse->course_banner);
+                        $resourse->course_banner = asset('/public/uploads/course_banner/'.$images[0]);
                         $resourse->user_profile = asset('/uploads/'.$resourse->user_profile);
                         $getrating = DB::table('ratereview')->where('course_id',$resourse->id)->get()->avg('rating');
                     if($getrating){
@@ -142,5 +152,58 @@ class FrontendController extends Controller
            }
     }
 
+    public function contactUs(Request $request){
+        try{
+            $details = [
+                'name' => $request->name,
+                'email' => $request->email,
+                'subject' => $request->subject,
+                'phone' => $request->phone,
+                'message' => $request->message
+            ];
+            $admin_mail = 'panchram@spartanbots.com'; 
+            $sendmail = Mail::to($admin_mail)->send(new Contactusmail($request->subject, $details));
+            return response()->json(['message' => 'Mail Sent Sucssfully'], 200); 
+        }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
+    public function globalSearch(Request $request){
+       try{
+        $query = Course::select('id','course_title','subject','grade_label','course_fee','course_banner','seller_id');
+        $search = $request->input('search',null);
+        $query = is_null($search)  ? $query : $query->where('course_title','LIKE','%'.$search.'%')->orWhere('subject','LIKE','%'.$search.'%')->orWhere('grade_label','LIKE','%'.$search.'%')->get();
+        foreach($query as $qr){
+            $images = explode(",",$qr->course_banner);
+            $qr->course_banner = asset('/public/uploads/course_banner/'.$images[0]);
+            $sellerdetila =  DB::table('users')->where('id','=',$qr->seller_id)->get();
+           foreach($sellerdetila as $details){
+            $qr->seller_name = $details->full_name;
+            $qr->user_profile = asset('/uploads/'.$details->user_profile);
+           }
+            $getrating = DB::table('ratereview')->where('course_id',$qr->id)->get()->avg('rating');
+            if($getrating){
+                $qr->rating = $getrating;
+            }else{
+                $qr->rating = 0;
+            }
+        }
+        if($query){
+        return response()->json([
+                    'success'=>true,
+                    'response'=>$query
+                ],200);
+       }
+       }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
     
 }

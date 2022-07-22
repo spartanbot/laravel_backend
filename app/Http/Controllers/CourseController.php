@@ -35,14 +35,17 @@ class CourseController extends Controller
         if ($request['subject'] == '') {
             $response['subject'] = 'Please enter course subject';
         }
-        if ($request['category_id'] == '') {
-            $response['category_id'] = 'Please enter category';
+        if ($request['category'] == '') {
+            $response['category'] = 'Please enter category';
         }
-        if ($request['language_id'] == '') {
-            $response['language_id'] = 'Please enter language';
+        if ($request['language'] == '') {
+            $response['language'] = 'Please enter language';
         }
         if ($request['grade_label'] == '') {
             $response['grade_label'] = 'Please enter grade lable';
+        }
+        if ($request['age_group'] == '') {
+            $response['age_group'] = 'Please enter age group';
         }
         if ($request['course_fee'] == '') {
             $response['course_fee'] = 'Please enter course fee';
@@ -70,38 +73,19 @@ class CourseController extends Controller
                              ],403);
                        }else{
                     
-                    if($request->hasFile('course_content')){
-                        $file = $request->file('course_content');
-                            $filename = time().$file->getClientOriginalName();
-                            $path = public_path().'/uploads/';
-                            $file->move($path, $filename);
-                    }else{
-                        $response['status'] = 'error';
-                        $response['message'] = 'Course Content can not empty';
-                        return response()->json($response, 403);
-                    }
-                    if($request->hasFile('course_banner')){
-                        $file_course_banner = $request->file('course_banner');
-                        $course_banner = time().$file_course_banner->getClientOriginalName();
-                        $course_path = public_path().'/uploads/course_banner/';
-                        $file_course_banner->move($course_path, $course_banner);
-                    }else{
-                        $response['status'] = 'error';
-                        $response['message'] = 'Course Banner can not empty';
-                        return response()->json($response, 403);
-                    }
                     $course  =  Course::create([
                             'course_title' => $request->course_title,
                             'course_description' => $request->course_description,
-                            'subject' => $request->subject,
+                            'subject' => serialize($request->subject),
                             'category_id' => $request->category_id,
                             'language_id' => $request->language_id,
+                            'category' => $request->category,
+                            'language' => $request->language,
                             'grade_label' => $request->grade_label,
-                            'course_banner' => 'banner'.$course_banner,
-                            'course_content' => $filename,
+                            'age_group' => $request->age_group,
                             'course_fee' => $request->course_fee,
                             'affiliation'=> $request->affiliation,
-                            'submission_type' => $request->submission_type,
+                            'submission_type' => serialize($request->submission_type),
                             'difficulty' => $request->difficulty,
                             'seller_id' => $this->user['id'],
                             'verify' => 1,
@@ -129,24 +113,91 @@ class CourseController extends Controller
             }
         }
     }
-    
+
+    public function addCoursecontent(Request $request){
+    try{
+        if($request->hasFile('course_content') && $request->course_id){
+            $file = $request->file('course_content');
+            $filename = time().$file->getClientOriginalName();
+            $path = public_path().'/uploads/';
+            $file->move($path, $filename);
+            $UpdateCourse = Course::where('id', $request->course_id)->update([
+                'course_content' => $filename, 
+            ]);
+                if($UpdateCourse){
+                    return response()->json([
+                        'status' => true,
+                        'message' => 'Course content updated successfully!'
+                    ], 200);
+                }
+                }else{
+                    $response['status'] = 'error';
+                    $response['message'] = 'Course Content can not empty';
+                    return response()->json($response, 403);
+                }
+            }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+            }     
+    }
+
+    public function addCourseBanner(Request $request){
+        try{
+            $images=array();
+            if($request->hasFile('course_banner') && $request->course_id){
+                $files = $request->file('course_banner');
+                foreach($files as $file){
+                    $course_banner = time().$file->getClientOriginalName();
+                    $course_path = public_path().'/uploads/course_banner/';
+                    $file->move($course_path, $course_banner);
+                    $images[]=$course_banner;
+                }
+            $UpdateCourse = Course::where('id', $request->course_id)->update([
+                'course_banner' => implode(",",$images), 
+            ]);   
+            if($UpdateCourse){
+                return response()->json([
+                    'status' => true,
+                    'message' => 'Course banner updated successfully!'
+                ], 200);
+            }
+            
+            }else{
+                $response['status'] = 'error';
+                $response['message'] = 'Course Banner can not empty';
+                return response()->json($response, 403);
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        } 
+    }
+
     public function editCourse(Request $request){
         try{
             if($this->user['role'] != 'user'){
             $editCourse = Course::where('id','=',$request->id)
                                   ->where('verify','=',1)
-                                  ->first();
-            $catdata = DB::table('category')
-            ->select('category_name')
-            ->where('id','=', $editCourse['category_id'])
-            ->get();
-            $langdata = DB::table('language')
-            ->select('language_name')
-            ->where('id','=', $editCourse['language_id'])
-            ->get();
-            $editCourse['course_content'] = '/uploads/'.$editCourse['course_content'];
-            $editCourse['category_name'] = $catdata[0]->category_name;
-            $editCourse['language_name'] = $langdata[0]->language_name;
+                                  ->get();
+                  foreach($editCourse as $course){
+                    $course->subject =  unserialize($course->subject);
+                    $course->submission_type =  unserialize($course->submission_type);
+                  }                
+            // $catdata = DB::table('category')
+            // ->select('category_name')
+            // ->where('id','=', $editCourse['category_id'])
+            // ->get();
+            // $langdata = DB::table('language')
+            // ->select('language_name')
+            // ->where('id','=', $editCourse['language_id'])
+            // ->get();
+            //$editCourse['course_content'] = '/uploads/'.$editCourse['course_content'];
+            // $editCourse['category_name'] = $catdata[0]->category_name;
+            // $editCourse['language_name'] = $langdata[0]->language_name;
             if($editCourse){
                 return response()->json([
                     'success'=>true,
@@ -223,14 +274,17 @@ class CourseController extends Controller
                 if ($request['subject'] == '') {
                     $response['subject'] = 'Please enter course subject';
                 }
-                if ($request['category_id'] == '') {
-                    $response['category_id'] = 'Please enter category';
+                if ($request['category'] == '') {
+                    $response['category'] = 'Please enter category';
                 }
-                if ($request['language_id'] == '') {
-                    $response['language_id'] = 'Please enter language';
+                if ($request['language'] == '') {
+                    $response['language'] = 'Please enter language';
                 }
                 if ($request['grade_label'] == '') {
                     $response['grade_label'] = 'Please enter grade lable';
+                }
+                if ($request['age_group'] == '') {
+                    $response['age_group'] = 'Please enter age group';
                 }
                 if ($request['course_fee'] == '') {
                     $response['course_fee'] = 'Please enter course fee';
@@ -252,15 +306,16 @@ class CourseController extends Controller
                         $UpdateCourse = Course::where('id', $request->id)->update([
                             'course_title' => $request->course_title,
                             'course_description' => $request->course_description,
-                            'subject' => $request->subject,
+                            'subject' => serialize($request->subject),
                             'category_id' => $request->category_id,
                             'language_id' => $request->language_id,
+                            'category' => $request->category,
+                            'language' => $request->language,
                             'grade_label' => $request->grade_label,
-                            'course_banner' => $request->course_banner,
-                            'course_content' => $request->course_content,
+                            'age_group' => $request->age_group,
                             'course_fee' => $request->course_fee,
                             'affiliation'=> $request->affiliation,
-                            'submission_type' => $request->submission_type,
+                            'submission_type' => serialize($request->submission_type),
                             'difficulty' => $request->difficulty,
                             'seller_id' => $this->user['id'],
                             'verify' => 1,

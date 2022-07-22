@@ -15,6 +15,8 @@ class Course extends Model
         'subject',
         'category_id',
         'language_id',
+        'category',
+        'language',
         'grade_label',
         'course_banner',
         'course_content',
