@@ -338,12 +338,14 @@ class UserAuth extends Controller
         if($user_data){
             $pass = Hash::check($request->password, $user_data->password);
             if ($pass) {
-                $token = JWTAuth::claims(['uid'=>$user_data->id,'email'=>$user_data->user_email,'role' => $user_data->role])->attempt($credentials);
+                $token = JWTAuth::claims(['uid'=>$user_data->id,'email'=>$user_data->user_email,'role' => $user_data->role,'user_name' => $user_data->user_name,'full_name' => $user_data->full_name])->attempt($credentials);
                 $user = JWTAuth::user();
                 if($token){
                     $data['status']= 201;
                     $data['access_token']= $token;
                     $data['user_role']= $user['role'];
+                    $data['user_name']= $user['user_name'];
+                    $data['full_name']= $user['full_name'];
                     $data['token_type']= 'bearer';
                     $data['expires_in']= auth()->factory()->getTTL() * 60;
                     $data['result']='Successfull Login';

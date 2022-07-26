@@ -84,6 +84,24 @@ class TestimonialController extends Controller
          }
     }
 
+   public function getTestimonialDateWise(Request $request){
+        try{
+            $fetchTestimonial = Testimonal::whereBetween('created_at',array($request->start_date,$request->end_date))
+            ->get();
+            if($fetchTestimonial){
+                return response()->json([
+                    'success'=>true,
+                    'response'=>$fetchTestimonial
+                ],200);
+            }
+        }catch(Exception $e){
+            $error = $e->getMessage();
+            $response['status'] = 'error';
+            $response['message'] = $error;
+            return response()->json($response, 403);
+        }
+   }
+
     public function editTestimonial(Request $request){
         try{
             $fetchTestimonial = Testimonal::where('id','=',$request->id)->first();

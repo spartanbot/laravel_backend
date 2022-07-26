@@ -74,9 +74,10 @@ public function editCategory(Request $request){
 
 }
 
-public function fetchAllCategory(){
+public function fetchAllCategory(Request $request){
     try{
-        $fetchallCategory = DB::table('category')->get();
+        $fetchallCategory = DB::table('category')->whereBetween('created_at',array($request->start_date,$request->end_date))
+        ->get();
         if($fetchallCategory){
             return response()->json([
                 'success'=>true,
@@ -84,7 +85,7 @@ public function fetchAllCategory(){
             ],200);
         }
        }catch(Exception $e){
-          return "error";
+        return $e;
        }
 
 }

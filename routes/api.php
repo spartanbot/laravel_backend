@@ -169,6 +169,8 @@ Route::post('/update_testimonial',
 [TestimonialController::class,'updateTestimonial']);
 Route::post('/update_testimonal_image', 
 [TestimonialController::class,'updateImage']);
+Route::post('/admin/get_testimonial_date_wise', 
+[TestimonialController::class,'getTestimonialDateWise']);
 /******************************************************************************
  ****************************************route cart info related************
  *********************************************************************************

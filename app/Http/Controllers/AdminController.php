@@ -76,7 +76,7 @@ class AdminController extends Controller
         $allOrder = [];
         try{
             if($request->user['role'] == 'admin'){
-                $fetchallOrder = DB::table('order')
+                $fetchallOrder = DB::table('order')->whereBetween('created_at',array($request->start_date,$request->end_date))
                 ->orderBy('id','asc')->get()->toArray();
                 $orderdata =[];
                 foreach($fetchallOrder as $order){
@@ -552,14 +552,15 @@ class AdminController extends Controller
                 ->get();
                 $top_seller = [];
                 foreach($all_topSELL as $top_sell){
-                    $fetch_course_user = DB::table('users')
+                    $fetch_course_user = DB::table('users')->whereBetween('created_at',array($request->start_date,$request->end_date))
                     ->where('id','=',$top_sell['seller_id'])
-                    ->select('full_name','user_email','id','created_at')
+                    ->select('full_name','user_email','id','created_at','phone')
                     ->get();
                     foreach($fetch_course_user as $user){
                         $top_seller['id'] = $user->id;
                         $top_seller['user_email'] = $user->user_email;
                         $top_seller['full_name'] = $user->full_name;
+                        $top_seller['phone'] = $user->phone;
                         $top_seller['created_at'] = $user->created_at;
                     }
                     array_push($all_data,$top_seller);
@@ -613,6 +614,7 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
                 $all_data = [];
+                $filtredData = [];
                 $all_topSELL = OrderItems::select('course_id', DB::raw('COUNT(course_id) as count'))
                 ->groupBy('course_id')
                 ->orderBy('count', 'desc')
@@ -620,14 +622,20 @@ class AdminController extends Controller
                 ->get();
                 $top_sell_product = [];
                 foreach($all_topSELL as $top_sell){
-                    $top_sell_product['course_id'] = $top_sell['course_id'];
-                    $top_sell_product['total_sales'] = $top_sell['count'];
-                    $fetch_course = DB::table('course')
+                    $fetch_course = DB::table('course')->whereBetween('course.created_at',array($request->start_date,$request->end_date))
                     ->join('users', 'users.id', '=', 'course.seller_id')
                     ->where('course.id','=',$top_sell['course_id'])
                     ->select('course_title','course_fee','course.created_at','users.full_name')
                     ->get();
-                    foreach($fetch_course as $course){
+                    foreach($fetch_course as $key1 =>  $course){
+                        $getpoprating = DB::table('ratereview')->where('course_id',$top_sell['course_id'])->get()->avg('rating');
+                      if($getpoprating){
+                        $top_sell_product['product_rating'] = $getpoprating;
+                       }else{
+                        $top_sell_product['product_rating'] = 0;
+                       } 
+                        $top_sell_product['course_id'] = $top_sell['course_id'];
+                        $top_sell_product['total_sales'] = $top_sell['count'];
                         $top_sell_product['product_title'] = $course->course_title;
                         $top_sell_product['product_fee'] = $course->course_fee;
                         $top_sell_product['created_at'] = $course->created_at;
@@ -636,9 +644,17 @@ class AdminController extends Controller
                     }
                     array_push($all_data,$top_sell_product);
                 }
+                 foreach($all_data as $key => $final_data){
+                    
+                    if(empty($final_data)){
+                       unset($all_data[$key]);
+                    }else{
+                       array_push($filtredData,$final_data);
+                    }  
+                 }
                 return response()->json([
                     'success'=>true,
-                    'response'=>$all_data
+                    'response'=>$filtredData
                 ],200);
             }
         }catch(Exception $e){
