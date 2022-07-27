@@ -201,6 +201,7 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
             $allBuyer =  User::where('role','=','user')
+            ->where('verified','=',1)
             ->select('id','full_name','user_email','created_at')
             ->get();
             if($allBuyer){
@@ -315,6 +316,7 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
             $allsellers =  User::where('role','=','seller')
+            ->where('verified','=',1)
             ->select('id','full_name','user_email','created_at')
             ->get();
             if($allsellers){
@@ -409,7 +411,7 @@ class AdminController extends Controller
     public function all_users(Request $request){
         try{
             if($request->user['role'] == 'admin'){
-                $all_user = User::all();
+                $all_user = User::where('verified','=',1)->get();
                 if(sizeof($all_user)){
                     return response()->json([
                         'success'=>true,
@@ -430,6 +432,7 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
                 $all_unapproved_user = User::where('role','=','seller')
+                ->where('verified','=',1)
                 ->where('approved_by_admin','=',0)
                 ->select('id','full_name','user_name','user_email','created_at')
                 ->get();
@@ -468,6 +471,7 @@ class AdminController extends Controller
          try{
             if($request->user['role'] == 'admin'){
                 $all_approved_user = User::where('role','=','seller')
+                ->where('verified','=',1)
                 ->where('approved_by_admin','=',1)
                 ->select('id','full_name','user_name','user_email','created_at')
                 ->get();
@@ -545,6 +549,7 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
                 $all_data = [];
+                $filtredData = [];
                 $all_topSELL = OrderItems::select('seller_id', DB::raw('COUNT(seller_id) as count'))
                 ->groupBy('seller_id')
                 ->orderBy('count', 'desc')
@@ -554,6 +559,7 @@ class AdminController extends Controller
                 foreach($all_topSELL as $top_sell){
                     $fetch_course_user = DB::table('users')->whereBetween('created_at',array($request->start_date,$request->end_date))
                     ->where('id','=',$top_sell['seller_id'])
+                    ->where('verified','=',1)
                     ->select('full_name','user_email','id','created_at','phone')
                     ->get();
                     foreach($fetch_course_user as $user){
@@ -565,9 +571,17 @@ class AdminController extends Controller
                     }
                     array_push($all_data,$top_seller);
                 }
+                foreach($all_data as $key => $final_data){
+                    
+                    if(empty($final_data)){
+                       unset($all_data[$key]);
+                    }else{
+                       array_push($filtredData,$final_data);
+                    }  
+                 }
                 return response()->json([
                     'success'=>true,
-                    'response'=>$all_data
+                    'response'=>$filtredData
                 ],200);
             }
         }catch(Exception $e){
@@ -835,7 +849,9 @@ class AdminController extends Controller
     {
         try{
             $ids = $request->ids;
-            $delete = User::whereIn('id',$ids)->delete();
+            $delete = User::whereIn('id',$ids)->update([
+                'verified' => 0, 
+            ]); 
             if($delete){
                 return response()->json([
                     'success'=>true,

@@ -297,9 +297,12 @@ class SellerDashboardController extends Controller
         $all_data = [];
         if($this->user['role'] = 'seller'){
           $get_products = Course::where('seller_id','=',$this->user['id'])
-          ->select('id','course_title','subject','category_id','created_at','course_fee')
+          ->select('id','course_title','subject','category_id','course_banner','created_at','course_fee')
           ->get();
           foreach($get_products as $products){
+            $products->subject =  unserialize($products->subject);
+            $images = explode(",",$products->course_banner);
+            $products->course_banner = asset('/uploads/course_banner/'.$images[0]);
             array_push($all_data,$products);
           }
           return response()->json([
