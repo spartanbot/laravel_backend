@@ -220,7 +220,10 @@ Route::post('/seller/total_sales',
 [SellerDashboardController::class,'getTotalOrderCountByMonth']);
 Route::get('/seller/today_sales', 
 [SellerDashboardController::class,'todaySales']);
-
+Route::post('/seller/visitor_graph', 
+[SellerDashboardController::class,'visitorGraph']);
+Route::post('/seller/rating_graph', 
+[SellerDashboardController::class,'ratingGraph']);
 // graph section for productPage
 
 Route::get('/seller/total_sales_order_profit', 

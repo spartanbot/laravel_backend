@@ -12,6 +12,7 @@ use App\Models\OrderItems;
 use App\Models\User;
 use App\Models\Course;
 use App\Models\Ratereview;
+use App\Models\Visitor;
 use Auth;
 use JWTAuth;
 use DB;
@@ -840,5 +841,74 @@ class SellerDashboardController extends Controller
       }
    }
 
+   public function visitorGraph(Request $request){
+    try{
+                $users = Visitor::whereBetween('created_at',array($request->start_date,$request->end_date))
+                ->get()
+                ->groupBy(function ($date) {
+                    return Carbon::parse($date->created_at)->format('m');
+                });
+
+                $usermcount = [];
+                $userArr = [];
+
+              foreach ($users as $key => $value) {
+                  $usermcount[(int)$key] = count($value);
+              }
+
+              $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+              for ($i = 1; $i <= 12; $i++) {
+                  if (!empty($usermcount[$i])) {
+                      $userArr[$i]['count'] = $usermcount[$i];
+                  } else {
+                      $userArr[$i]['count'] = 0;
+                  }
+                  $userArr[$i]['month'] = $month[$i - 1];
+              }
+
+             return response()->json(array_values($userArr),200);
+    }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+    }
+}
+
+  public function ratingGraph(Request $request){
+     try{
+        $users = Ratereview::whereBetween('created_at',array($request->start_date,$request->end_date))
+        ->get()
+        ->groupBy(function ($date) {
+            return Carbon::parse($date->created_at)->format('m');
+        });
+
+          $usermcount = [];
+          $userArr = [];
+
+          foreach ($users as $key => $value) {
+              $usermcount[(int)$key] = count($value);
+          }
+
+          $month = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+          for ($i = 1; $i <= 12; $i++) {
+              if (!empty($usermcount[$i])) {
+                  $userArr[$i]['count'] = $usermcount[$i];
+              } else {
+                  $userArr[$i]['count'] = 0;
+              }
+              $userArr[$i]['month'] = $month[$i - 1];
+          }
+
+          return response()->json(array_values($userArr),200);
+     }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+    }
+  }
      
 }
