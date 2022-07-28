@@ -126,6 +126,7 @@ class AdminController extends Controller
             if($request->user['role'] == 'admin'){
                 $fetchallcourse = DB::table('course')
                 ->join('users', 'users.id', '=', 'course.seller_id')
+                ->where('course.verify','=',1)
                 ->select('course.*', 'users.full_name')
                 ->get();
                 $products = [];
@@ -368,6 +369,7 @@ class AdminController extends Controller
             $all_seller_prod = [];
             if($request->user['role'] == 'admin'){
             $fetch_products = Course::where('seller_id','=',$request->id)
+            ->where('verify','=',1)
             ->select('id','course_title','course_fee')
             ->get();
             $products = [];
@@ -639,6 +641,7 @@ class AdminController extends Controller
                     $fetch_course = DB::table('course')->whereBetween('course.created_at',array($request->start_date,$request->end_date))
                     ->join('users', 'users.id', '=', 'course.seller_id')
                     ->where('course.id','=',$top_sell['course_id'])
+                    ->where('verify','=',1)
                     ->select('course_title','course_fee','course.created_at','users.full_name')
                     ->get();
                     foreach($fetch_course as $key1 =>  $course){
@@ -900,8 +903,10 @@ class AdminController extends Controller
     public function productDelete(Request $request){
         try{
             if($request->user['role'] == 'admin'){
-                $ids = $request->order_ids;
-                $product = Course::whereIn('id',$ids)->delete();
+                $ids = $request->ids;
+                $product = Course::whereIn('id',$ids)->update([
+                    'verify' => 0, 
+                ]); 
                 if($product){
                     return response()->json([
                         'success'=>true,
