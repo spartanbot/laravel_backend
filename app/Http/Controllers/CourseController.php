@@ -64,7 +64,7 @@ class CourseController extends Controller
             return response()->json($response, 403);
         } else {
             try{
-                if($this->user['role'] == 'seller'){
+                if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                      $fetchCourse = Course::where('course_title','=',$request->course_title)->first();
                       if($fetchCourse){
                             return response()->json([
@@ -179,7 +179,7 @@ class CourseController extends Controller
 
     public function editCourse(Request $request){
         try{
-            if($this->user['role'] != 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
             $editCourse = Course::where('id','=',$request->id)
                                   ->where('verify','=',1)
                                   ->get();
@@ -259,7 +259,7 @@ class CourseController extends Controller
     
     public function updateCourse(Request $request){
     
-            if($this->user['role'] != 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $response = [];
 
                 if($request['id'] ==''){
@@ -416,7 +416,7 @@ class CourseController extends Controller
 
     public function fetchAllResourse(Request $request){
        try{
-           if($this->user['role'] == 'seller' || 'user'){
+           if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
             $resourseItem = Resourse::where('seller_id','!=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
             if($resourseItem){
                 return response()->json([

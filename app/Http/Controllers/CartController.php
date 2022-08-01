@@ -27,7 +27,7 @@ class CartController extends Controller
 
     public function cartAdd(Request $request){
         try{
-            if($this->user['role'] == 'seller' || 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $coursedata = DB::table('course')
                 ->select('seller_id')
                 ->where('id','=', $request->course_id)
@@ -59,7 +59,7 @@ class CartController extends Controller
 
     public function cartItem(Request $request){
         try{
-            if($this->user['role'] == 'seller' || 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $cartItem = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
             if($cartItem){
                 return response()->json([
@@ -79,7 +79,7 @@ class CartController extends Controller
 
     public function clearCartAfterCheckout(){
         try{
-            if($this->user['role'] == 'seller' || 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] =='user'){
                 $clearCart = Cart::where('user_id','=',$this->user['id'])
                 ->delete();
             if($clearCart){
@@ -100,7 +100,7 @@ class CartController extends Controller
 
     public function cartDelete(Request $request){
         try{
-            if($this->user['role'] == 'seller' || 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $deleteCart = Cart::where('user_id','=',$this->user['id'])
                 ->where('course_id','=',$request->course_id)
                 ->delete();
@@ -122,7 +122,7 @@ class CartController extends Controller
 
     public function checkoutOrder(Request $request){
         try{
-            if($this->user['role'] == 'seller' || 'user'){
+            if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 
                 $cartItems = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
                 if($cartItems){

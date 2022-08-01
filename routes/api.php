@@ -177,17 +177,21 @@ Route::post('/admin/get_testimonial_date_wise',
  *****************************/
 Route::post('/add_bank', 
 [SellerDashboardController::class,'addBankAccount']);
-Route::get('/seller/top_products', 
+Route::post('/seller/delete_product', 
+[SellerDashboardController::class,'sellerProductDelete']);
+Route::post('/seller/delete_order', 
+[SellerDashboardController::class,'sellerOrderDeleteAction']);
+Route::post('/seller/top_products', 
 [SellerDashboardController::class,'topProducts']);
-Route::get('/seller/seller_order', 
+Route::post('/seller/seller_order', 
 [SellerDashboardController::class,'fetchSellerOrder']);
 Route::post('/seller/get_order_items', 
 [SellerDashboardController::class,'fetchOrderItems']);
-Route::get('/seller/get_seller_products', 
+Route::post('/seller/get_seller_products', 
 [SellerDashboardController::class,'getSellerProducts']);
 Route::get('/seller/sold_products', 
 [SellerDashboardController::class,'soldProducts']);
-Route::get('/seller/all_buyers', 
+Route::post('/seller/all_buyers', 
 [SellerDashboardController::class,'allBuyer']);
 Route::post('/seller/user_profile', 
 [SellerDashboardController::class,'viewProfile']);
@@ -199,11 +203,11 @@ Route::get('/seller/seller_profile',
 [SellerDashboardController::class,'sellerProfile']);
 Route::post('/seller/change_password', 
 [SellerDashboardController::class,'changePassword']);
-Route::post('/seller/update_profile_basicinfo', 
-[SellerDashboardController::class,'updateBasicInfo']);
-Route::post('/seller/update_profile_teachinginfo', 
-[SellerDashboardController::class,'teachingInfo']);
-Route::get('/seller/seller_notifications', 
+// Route::post('/seller/update_profile_basicinfo', 
+// [SellerDashboardController::class,'updateBasicInfo']);
+// Route::post('/seller/update_profile_teachinginfo', 
+// [SellerDashboardController::class,'teachingInfo']);
+Route::post('/seller/seller_notifications', 
 [NavigationController::class,'seller_notification']);
 Route::get('/user/user_notification', 
 [NavigationController::class,'get_user_notification']);
@@ -212,7 +216,7 @@ Route::get('/user/user_notification',
  
 Route::get('/seller/total_products', 
 [SellerDashboardController::class,'total_products']);
-Route::get('/seller/sold_products', 
+Route::get('/seller/sold_products_count', 
 [SellerDashboardController::class,'products_sold']);
 Route::get('/seller/total_order', 
 [SellerDashboardController::class,'total_order']);
@@ -276,6 +280,8 @@ Route::post('/admin/add_stripe_keys',
 [AdminController::class,'addStripeKey']);
 Route::post('/admin/update_stripe_keys', 
 [AdminController::class,'updateStripeKeys']);
+Route::get('/admin/edit_stripe_keys', 
+[AdminController::class,'editStripeKey']);
 Route::get('/admin/today_orders', 
 [AdminController::class,'orderToday']);
 Route::get('/admin/today_sales', 
@@ -341,10 +347,14 @@ Route::get('/all_userinfo',
     [UserDashboardController::class,'getAllUserinfo']); 
 Route::get('/user/buyer_profile', 
     [UserDashboardController::class,'buyerProfile']);
-Route::post('/user/update_basic_info_profile', 
+Route::post('/common/update_basic_info_profile', 
     [UserDashboardController::class,'updateProfileBasicInfo']);
-Route::post('/user/update_teaching_setting_profile', 
+Route::post('/common/update_teaching_setting_profile', 
     [UserDashboardController::class,'updateTeachingSettingsProfile']);
+Route::post('/common/update_seller_info_profile', 
+    [UserDashboardController::class,'updateSellerInfoProfile']);
+Route::post('/common/update_course_instructor_profile', 
+    [UserDashboardController::class,'courseInstructorProfile']);
 Route::post('/change_password', 
     [UserDashboardController::class,'changePassword']);
 Route::get('/user/user_all_products', 

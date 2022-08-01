@@ -20,7 +20,7 @@ class RatingReviewController extends Controller
             return response()->json($response, 403);
         }else{
          try{
-              if($request->user['role'] == 'user'){
+              if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
                       $Rating = Ratereview::create([
                           'user_id' => $request->user['id'],
                           'course_id' => $request->course_id,
@@ -50,7 +50,7 @@ class RatingReviewController extends Controller
 
      public function get_course_Rating_Review(Request $request){
         try{
-         if($request->user['role'] == 'user'){
+         if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
             $get_Rating = User::leftJoin('ratereview', 'ratereview.user_id', '=', 'users.id')
             ->select('ratereview.*','users.full_name')
             ->where('ratereview.course_id', '=',$request->course_id)
@@ -76,7 +76,7 @@ class RatingReviewController extends Controller
     public function  course_rating_avg(Request $request)
     {
       try{
-         if($request->user['role'] == 'user'){
+         if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
             $Rating = DB::table('ratereview')->where('course_id','=', $request->course_id)
             ->get()->avg('rating');
                 if($Rating){
@@ -98,7 +98,7 @@ class RatingReviewController extends Controller
 
     public function totalRating(Request $request){
         try{
-         if($request->user['role'] == 'user'){
+         if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
              $response=[];
      //rating
              $product_review = DB::table('ratereview')
@@ -128,7 +128,7 @@ class RatingReviewController extends Controller
     public function ratingProgressBar(Request $request){
         try{
             $allprogress = [];
-            if($request->user['role'] == 'user'){
+            if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
                 $product_rating = Ratereview::where('course_id','=',$request->course_id)
                 ->select('rating')
                 ->get()

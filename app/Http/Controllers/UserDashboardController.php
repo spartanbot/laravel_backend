@@ -147,7 +147,7 @@ public function getAllUserinfo(Request $request){
 
     public function buyerProfile(){
         try{
-          if($this->user['role'] = 'user'){
+          if($this->user['role'] = 'user' || $this->user['role'] == 'seller'){
             $user = User::where('id','=',$this->user['id'])
             ->get();
             foreach($user as $data){
@@ -174,13 +174,11 @@ public function getAllUserinfo(Request $request){
 
         public function updateProfileBasicInfo(Request $request){
           try{
-            if($this->user['role'] = 'user'){
               $update_info =  User::where('user_email',$this->user['user_email'])->update([
                 'full_name' => $request->full_name,
                 'gender' => $request->gender,
                 'phone' => $request->phone
               ]);
-            }
             if($update_info){
               $data['status']= 'success';
               $data['result']='Successfull update info';
@@ -197,7 +195,6 @@ public function getAllUserinfo(Request $request){
 
         public function updateTeachingSettingsProfile(Request $request){
           try{
-            if($this->user['role'] = 'user'){
               $update_info =  User::where('user_email',$this->user['user_email'])->update([
                 'i_am_a' => $request->i_am_a,
                 'location' => $request->location,
@@ -206,7 +203,56 @@ public function getAllUserinfo(Request $request){
                 'age_group' => $request->age_group,
                 'subject' => $request->subject
               ]);
+          
+            if($update_info){
+              $data['status']= 'success';
+              $data['result']='Successfull update info';
+              return response()->json($data,200);
             }
+           }catch(Exception $e){
+                    $error = $e->getMessage();
+                    $response['status'] = 'error';
+                    $response['message'] = $error;
+                    return response()->json($response, 403);
+                  }
+        }
+
+        public function updateSellerInfoProfile(Request $request){
+          try{
+              $update_info =  User::where('user_email',$this->user['user_email'])->update([
+                'organization' => $request->organization,
+                'seller_ref_name' => $request->seller_ref_name,
+                'seller_ref_email' => $request->seller_ref_email,
+                'seller_ref_phonenumber' => $request->seller_ref_phonenumber,
+                'seller_ref_two_name' => $request->seller_ref_two_name,
+                'seller_ref_two_email' => $request->seller_ref_two_email,
+                'seller_ref_two_phonenumber' => $request->seller_ref_two_phonenumber
+              ]);
+            
+            if($update_info){
+              $data['status']= 'success';
+              $data['result']='Successfull update info';
+              return response()->json($data,200);
+            }
+           }catch(Exception $e){
+                    $error = $e->getMessage();
+                    $response['status'] = 'error';
+                    $response['message'] = $error;
+                    return response()->json($response, 403);
+                  }
+        }
+
+        public function courseInstructorProfile(Request $request){
+          try{
+              $update_info =  User::where('user_email',$this->user['user_email'])->update([
+                'resourse_name' => $request->organization,
+                'resourse_one_name' => $request->resourse_one_name,
+                'resourse_one_email' => $request->resourse_one_email,
+                'resourse_one_phonenumber' => $request->resourse_one_phonenumber,
+                'resourse_two_name' => $request->resourse_two_name,
+                'resourse_two_email' => $request->resourse_two_email,
+                'resourse_two_phonenumber' => $request->resourse_two_phonenumber
+              ]);
             if($update_info){
               $data['status']= 'success';
               $data['result']='Successfull update info';
@@ -222,7 +268,7 @@ public function getAllUserinfo(Request $request){
   
         public function changePassword(Request $request){
           try{
-            if($this->user['role'] = 'user'){
+            if($this->user['role'] = 'user' || $this->user['role'] == 'seller'){
               $response=[];
     
             if($request['current_password'] ==''){
@@ -281,7 +327,7 @@ public function getAllUserinfo(Request $request){
   public function user_allOrders(){
           try{
             $images = [];
-              if($this->user['role'] == 'user'){
+              if($this->user['role'] = 'user' || $this->user['role'] == 'seller'){
                   $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
                   ->join('order_item', 'order_item.order_id', '=', 'order.id')
                   ->join('course','course.id','=','order_item.course_id')
@@ -318,7 +364,7 @@ public function getAllUserinfo(Request $request){
     public function All_user_Product(){
       try{
         $images = [];
-          if($this->user['role'] == 'user'){
+          if($this->user['role'] = 'user' || $this->user['role'] == 'seller'){
               $fetchallcourse = DB::table('enrollments')->where('user_id','=',$this->user['id'])
               ->join('course', 'course.id', '=', 'enrollments.course_id')
               ->join('users','users.id','=','course.seller_id')
@@ -356,7 +402,7 @@ public function getAllUserinfo(Request $request){
           try{
             $multipleItems = [];
             $images = [];
-            if($this->user['role'] == 'user'){
+            if($this->user['role'] = 'user' || $this->user['role'] == 'seller'){
                 $fetchallOrder = DB::table('order')->where('order.user_id','=',$this->user['id'])
                 ->where('order.status','=','succeeded')
                 ->join('order_item', 'order_item.order_id', '=', 'order.id')

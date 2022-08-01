@@ -47,6 +47,23 @@ class AdminController extends Controller
               }
     }
 
+    public function editStripeKey(Request $request){
+     try{
+        if($request->user['role'] == 'admin'){
+           $edit = StripeKeys::where('id',1)->select('id','publishable_key','secret_key')->get();
+           return response()->json([
+            'success'=>true,
+            'response'=> $edit
+           ],200);
+        }
+     }catch(Exception $e){
+                $error = $e->getMessage();
+                $response['status'] = 'error';
+                $response['message'] = $error;
+                return response()->json($response, 403);
+              }
+    }
+
     public function updateStripeKeys(Request $request){
         try{
             if($request->user['role'] == 'admin'){
@@ -367,21 +384,28 @@ class AdminController extends Controller
     public function sellerProducts(Request $request){
         try{
             $all_seller_prod = [];
-            if($request->user['role'] == 'admin'){
+            //if($request->user['role'] == 'admin'){
             $fetch_products = Course::where('seller_id','=',$request->id)
             ->where('verify','=',1)
-            ->select('id','course_title','course_fee')
+            ->select('id','course_title','course_fee','created_at')
             ->get();
             $products = [];
             foreach($fetch_products as $product){
                 $products['id'] = $product['id'];
                 $products['course_title'] = $product['course_title'];
                 $products['course_fee'] = $product['course_fee'];
+                $products['created_at'] = $product['created_at'];
                 $enrolment_count = DB::table('enrollments')
                      ->select('course_id', DB::raw('count(*) as total'))
                      ->groupBy('course_id')
                      ->get();
                 foreach($enrolment_count as $enroled){
+                    $getpoprating = DB::table('ratereview')->where('course_id',$product['id'])->get()->avg('rating');
+                      if($getpoprating){
+                        $products['product_rating'] = $getpoprating;
+                       }else{
+                        $products['product_rating'] = 0;
+                       } 
                         if($product['id'] == $enroled->course_id){
                             $products['total_sale'] = $enroled->total;
                             $total_revenue = $product['course_fee'] * $enroled->total;
@@ -400,11 +424,11 @@ class AdminController extends Controller
                     $response['message'] = 'Products does not exist';
                     return response()->json($response, 403);
                 }
-            }else{
-                $response['status'] = 'error';
-                $response['message'] = 'Only Admin can see seller products';
-                return response()->json($response, 403);
-            }
+            // }else{
+            //     $response['status'] = 'error';
+            //     $response['message'] = 'Only Admin can see seller products';
+            //     return response()->json($response, 403);
+            // }
         }catch(Exception $e){
             return $e;
         }
@@ -511,15 +535,19 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
                 $all_data = [];
-                $all_products =  DB::table('course')
+                $all_products =  DB::table('course')->whereBetween('course.created_at',array($request->start_date,$request->end_date))
+                ->where('verify','=',1)
                 ->join('users', 'users.id', '=', 'course.seller_id')
                 ->select('course.*', 'users.full_name')
                 ->get();
                 $products = [];
                 foreach($all_products as $product){
+                    $products['course_id']=$product->id;
                     $products['product_name']=$product->course_title;
                     $products['product_price'] = $product->course_fee;
                     $products['seller_name'] = $product->full_name;
+                    $images = explode(",",$product->course_banner);
+                    $products['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                     $enrolment_count = DB::table('enrollments')
                      ->select('course_id', DB::raw('count(*) as total'))
                      ->groupBy('course_id')
@@ -528,11 +556,17 @@ class AdminController extends Controller
                             if($product->id == $enroled->course_id){
                                 $products['qty'] = $enroled->total;
                                 $total_revenue = $product->course_fee * $enroled->total;
+                                //admin commision
                                 $percentage = 30;
                                 $totalamount = $total_revenue;
                                 $transferAmount = ($percentage / 100) * $totalamount;
+                                 //seller commision
+                                 $percentageseller = 70;
+                                 $transferAmountToSeller = ($percentageseller / 100) * $totalamount;
                                 $products['total_revenue'] = $total_revenue;
+                                $products['seller_commission'] = $transferAmountToSeller;
                                 $products['total_commission'] = $transferAmount;
+     
                             }
                         }
                     array_push($all_data,$products);

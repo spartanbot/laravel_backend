@@ -26,8 +26,9 @@ class NavigationController extends Controller
 
     public function seller_notification(Request $request){
        try{
-        if($request->user['role'] == 'seller'){
-            $get_notifi = Navigation::where('seller_id','=',$request->user['id'])
+        if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
+            $get_notifi = Navigation::whereBetween('created_at',array($request->start_date,$request->end_date))
+            ->where('seller_id','=',$request->user['id'])
             ->where('type','=','Enrol')
             ->select('message','created_at')
             ->orderBy('created_at','desc')->get();
@@ -48,7 +49,7 @@ class NavigationController extends Controller
 
     public function get_user_notification(Request $request){
         try{
-            if($request->user['role'] == 'user'){
+            if($request->user['role'] == 'user' || $request->user['role'] == 'seller'){
                 $get_notifi = Navigation::where('type','=','ProductCreated')
                 ->select('message','created_at')
                 ->orderBy('created_at','desc')->get();

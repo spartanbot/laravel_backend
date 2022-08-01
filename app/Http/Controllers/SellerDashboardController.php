@@ -183,14 +183,68 @@ class SellerDashboardController extends Controller
         }
      }
    }
+
+   public function sellerProductDelete(Request $request){
+    try{
+        if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
+            $ids = $request->ids;
+            $product = Course::whereIn('id',$ids)->update([
+                'verify' => 0, 
+            ]); 
+            if($product){
+                return response()->json([
+                    'success'=>true,
+                    'response'=> 'Product deleted !'
+                ],200);
+            }
+        }
+    }catch(Exception $e){
+        $error = $e->getMessage();
+        $response['status'] = 'error';
+        $response['message'] = $error;
+        return response()->json($response, 403);
+    }
+}
+
+public function sellerOrderDeleteAction(Request $request){
+  try{
+      if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
+          $ids = $request->order_ids;
+          $orderItems = OrderItems::whereIn('order_id',$ids)->delete();
+          if($orderItems){
+              $order = Order::whereIn('id',$ids)->delete();
+              if($order){
+                  return response()->json([
+                      'success'=>true,
+                      'response'=> 'Order deleted !'
+                  ],200);
+              }
+          }else{
+              $orderstatus = Order::whereIn('id',$ids)->delete();
+              if($orderstatus){
+                  return response()->json([
+                      'success'=>true,
+                      'response'=> 'Order deleted !'
+                  ],200);
+              }
+          }
+      }
+  }catch(Exception $e){
+      $error = $e->getMessage();
+      $response['status'] = 'error';
+      $response['message'] = $error;
+      return response()->json($response, 403);
+  }
+}
    
-   public function topProducts(){
+   public function topProducts(Request $request){
      try{
-      if($this->user['role'] = 'seller'){
+      if($this->user['role'] = 'seller' || $this->user['role'] == 'user'){
         $all_data = [];
-        $fetch_course = DB::table('course')
+        $finalData = [];
+        $fetch_course = DB::table('course')->whereBetween('course.created_at',array($request->start_date,$request->end_date))
             ->where('seller_id','=',$this->user['id'])
-            // ->join('ratereview', 'ratereview.course_id','=','id')
+            ->where('verify','=',1)
             ->select('id','course_title','course_fee')
             ->get();
           $top_sell_product = [];
@@ -198,7 +252,12 @@ class SellerDashboardController extends Controller
             $top_sell_product['id'] = $top_sell->id;
             $top_sell_product['course_title'] = $top_sell->course_title;
             $top_sell_product['course_fee'] = $top_sell->course_fee;
-            // $top_sell_product['rating'] = $top_sell->rating;
+            $getpoprating = DB::table('ratereview')->where('course_id',$top_sell->id)->get()->avg('rating');
+              if($getpoprating){
+                  $top_sell_product['product_rating'] = $getpoprating;
+                }else{
+                  $top_sell_product['product_rating'] = 0;
+                }
             $all_topSELL = OrderItems::where('course_id','=',$top_sell->id)
             ->select('course_id', DB::raw('COUNT(course_id) as count'))
             ->groupBy('course_id')
@@ -206,14 +265,21 @@ class SellerDashboardController extends Controller
             ->take(10)
             ->get();
             foreach($all_topSELL as $sell_item){
-              $top_sell_product['total_sale'] = $sell_item->count;
-              $top_sell_product['total_revenue'] = $top_sell->course_fee * $sell_item->count;
+                $top_sell_product['total_sale'] = $sell_item->count;
+                $top_sell_product['total_revenue'] = $top_sell->course_fee * $sell_item->count;
             }
             array_push($all_data,$top_sell_product);
           }
+          foreach($all_data as $data){
+                   if(empty($data['total_sale'])){
+                    $data['total_sale'] = 0;
+                    $data['total_revenue'] = 0;
+                   }
+            array_push($finalData,$data);    
+          }
           return response()->json([
             'success'=>true,
-            'response'=>$all_data
+            'response'=>$finalData
             ],200);
       }
      }catch(Exception $e){
@@ -224,11 +290,12 @@ class SellerDashboardController extends Controller
         }
    }
 
-  public function fetchSellerOrder(){
+  public function fetchSellerOrder(Request $request){
       try{
         $all_data = [];
-        if($this->user['role'] = 'seller'){
-          $orderd_item = OrderItems::where('seller_id','=',$this->user['id'])
+        if($this->user['role'] = 'seller' || $this->user['role'] == 'user' ){
+          $orderd_item = OrderItems::whereBetween('order_item.created_at',array($request->start_date,$request->end_date))
+          ->where('seller_id','=',$this->user['id'])
           ->join('users', 'users.id','=','user_id')
           ->select('order_id','course_id','user_id','users.full_name')
           ->get();
@@ -263,7 +330,7 @@ class SellerDashboardController extends Controller
       try{
         $all_data = [];
         $images = [];
-        if($this->user['role'] = 'seller'){
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
           $orderd_item = OrderItems::where('order_id','=',$request->order_id)
           ->join('users', 'users.id','=','user_id')
           ->join('course','course.id','=','course_id')
@@ -292,11 +359,13 @@ class SellerDashboardController extends Controller
         }
     }
 
-    public function getSellerProducts(){
+    public function getSellerProducts(Request $request){
       try{
         $all_data = [];
-        if($this->user['role'] = 'seller'){
-          $get_products = Course::where('seller_id','=',$this->user['id'])
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
+          $get_products = Course::whereBetween('course.created_at',array($request->start_date,$request->end_date))
+          ->where('seller_id','=',$this->user['id'])
+          ->where('verify','=',1)
           ->select('id','course_title','subject','category_id','course_banner','created_at','course_fee')
           ->get();
           foreach($get_products as $products){
@@ -318,15 +387,25 @@ class SellerDashboardController extends Controller
               }
     }
 
-    public function soldProducts(){
+    public function soldProducts(Request $request){
       try{
         $all_seller_prod = [];
-        if($this->user['role'] = 'seller'){
-        $fetch_products = Course::where('seller_id','=',$this->user['id'])
-        ->select('id','course_title','course_fee')
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
+        $fetch_products = Course::whereBetween('course.created_at',array($request->start_date,$request->end_date))
+        ->where('seller_id','=',$this->user['id'])
+        ->where('verify','=',1)
+        ->select('id','course_title','course_fee','course_banner')
         ->get();
         $products = [];
         foreach($fetch_products as $product){
+           $images = explode(",",$product->course_banner);
+           $products['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
+           $getpoprating = DB::table('ratereview')->where('course_id',$product->id)->get()->avg('rating');
+              if($getpoprating){
+                  $products['product_rating'] = $getpoprating;
+                }else{
+                  $products['product_rating'] = 0;
+                }
             $enrolment_count = DB::table('enrollments')
                  ->select('course_id', DB::raw('count(*) as total'))
                  ->groupBy('course_id')
@@ -358,26 +437,37 @@ class SellerDashboardController extends Controller
               }
     }
 
-    public function allBuyer(){
+    public function allBuyer(Request $request){
       try{
         $all_data = [];
-        if($this->user['role'] = 'seller'){
-          $all_buyer = OrderItems::where('seller_id','=',$this->user['id'])
-          ->join('users', 'users.id','=','user_id')
-          ->select('user_id','users.full_name','users.user_email')
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
+          $all_buyer = OrderItems::whereBetween('order_item.created_at',array($request->start_date,$request->end_date))
+          ->where('seller_id','=',$this->user['id'])
+          ->select('user_id')
           ->get();
-        }
-        $all_user = [];
-        foreach($all_buyer as $key => $buyer){
-          
-          $all_user = $buyer;
-          array_push($all_data,$all_user);
+          $all_user = [];
+          foreach($all_buyer as $key => $buyer){
+           $user = User::where('id','=',$buyer->user_id)
+            ->where('verified','=',1)
+            ->select('full_name','user_email','phone','user_profile')
+            ->get();
+            foreach($user as $udata){
+              $udata->user_profile = asset('/uploads/'.$udata->user_profile);
+              $all_user = $udata;
+              array_push($all_data,$all_user);
+            }
+          }
         }
         if(sizeof($all_data)){
           return response()->json([
               'success'=>true,
               'response'=>$all_data
           ],200);
+        }else{
+          return response()->json([
+            'success'=>true,
+            'response'=>'User Not found'
+          ],403);
         }
       }catch(Exception $e){
                 $error = $e->getMessage();
@@ -389,7 +479,7 @@ class SellerDashboardController extends Controller
 
     public function viewProfile(Request $request){
            try{
-            if($this->user['role'] = 'seller'){
+            if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
               $get_user = User::where('id','=',$request->user_id)
               ->where('role','=','user')
               ->get();
@@ -414,18 +504,28 @@ class SellerDashboardController extends Controller
 
     public function fetchUserOrders(Request $request){
            try{
-            if($this->user['role'] = 'seller'){
+            if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
               $response = [];
               $basic_info = User::where('id','=',$request->user_id)
               ->select('full_name','user_name','user_email','i_am_a')
               ->get();
-          
-              $order = Order::where('user_id','=',$request->user_id)
-              ->select('id','created_at','status','total')
-              ->get();
+              $orderItem = OrderItems::where('user_id','=',$request->user_id)
+              ->select('order_id',DB::raw('COUNT(order_id) as item'))
+              ->groupBy('order_id')->get();
+               $data = [];
+              foreach($orderItem as $item){
+                $orders = Order::whereBetween('order.created_at',array($request->start_date,$request->end_date))
+                ->where('id','=',$item->order_id)
+                ->select('id','created_at','status','total')
+                ->get();
+                foreach($orders as $order){
+                  $order->item = $item->item;
+                  array_push($data,$order);
+                }
+              }
               if($basic_info && $order){
                   $response['basic_info'] = $basic_info;
-                  $response['orderHistory'] = $order;
+                  $response['orderHistory'] = $data;
                   return response()->json([
                       'success'=>true,
                       'response'=>$response
@@ -456,7 +556,8 @@ class SellerDashboardController extends Controller
         $total_price =0;
         $orderItems = [];
         $images = [];
-            $Items = OrderItems::where('order_id','=',$request->order_id)
+            $Items = OrderItems::whereBetween('order_item.created_at',array($request->start_date,$request->end_date))
+            ->where('order_id','=',$request->order_id)
             ->select('course_id','created_at','course_fee')
             ->get()->toArray();
             foreach($Items as $item){
@@ -489,7 +590,7 @@ class SellerDashboardController extends Controller
     }
     public function sellerProfile(){
       try{
-        if($this->user['role'] = 'seller'){
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
           $user = User::where('id','=',$this->user['id'])
           ->get(); 
           foreach($user as $data){
@@ -514,57 +615,57 @@ class SellerDashboardController extends Controller
               }
     }
 
-    public function updateBasicInfo(Request $request){
-       try{
-        if($this->user['role'] = 'seller'){
-          $update_info =  User::where('user_email',$this->user['user_email'])->update([
-            'full_name' => $request->full_name,
-            'gender' => $request->gender,
-            'phone' => $request->phone
-          ]);
-        }
-        if($update_info){
-          $data['status']= 'success';
-          $data['result']='Successfull update info';
-          return response()->json($data,200);
-        }
-       }catch(Exception $e){
-                $error = $e->getMessage();
-                $response['status'] = 'error';
-                $response['message'] = $error;
-                return response()->json($response, 403);
-              }
-    }
+    // public function updateBasicInfo(Request $request){
+    //    try{
+    //     if($this->user['role'] = 'seller'){
+    //       $update_info =  User::where('user_email',$this->user['user_email'])->update([
+    //         'full_name' => $request->full_name,
+    //         'gender' => $request->gender,
+    //         'phone' => $request->phone
+    //       ]);
+    //     }
+    //     if($update_info){
+    //       $data['status']= 'success';
+    //       $data['result']='Successfull update info';
+    //       return response()->json($data,200);
+    //     }
+    //    }catch(Exception $e){
+    //             $error = $e->getMessage();
+    //             $response['status'] = 'error';
+    //             $response['message'] = $error;
+    //             return response()->json($response, 403);
+    //           }
+    // }
 
-    public function teachingInfo(Request $request){
-      try{
-        if($this->user['role'] = 'seller'){
-          $update_info =  User::where('user_email',$this->user['user_email'])->update([
-            'i_am_a' => $request->i_am_a,
-            'location' => $request->location,
-            'preferred_language' => $request->preferred_language,
-            'affiliation' => $request->affiliation,
-            'age_group' => $request->age_group,
-            'subject' => $request->subject,
-          ]);
-        }
-        if($update_info){
-          $data['status']= 'success';
-          $data['result']='Successfull update teaching info';
-          return response()->json($data,200);
-        }
-       }catch(Exception $e){
-                $error = $e->getMessage();
-                $response['status'] = 'error';
-                $response['message'] = $error;
-                return response()->json($response, 403);
-              }
-    }
+    // public function teachingInfo(Request $request){
+    //   try{
+    //     if($this->user['role'] = 'seller'){
+    //       $update_info =  User::where('user_email',$this->user['user_email'])->update([
+    //         'i_am_a' => $request->i_am_a,
+    //         'location' => $request->location,
+    //         'preferred_language' => $request->preferred_language,
+    //         'affiliation' => $request->affiliation,
+    //         'age_group' => $request->age_group,
+    //         'subject' => $request->subject,
+    //       ]);
+    //     }
+    //     if($update_info){
+    //       $data['status']= 'success';
+    //       $data['result']='Successfull update teaching info';
+    //       return response()->json($data,200);
+    //     }
+    //    }catch(Exception $e){
+    //             $error = $e->getMessage();
+    //             $response['status'] = 'error';
+    //             $response['message'] = $error;
+    //             return response()->json($response, 403);
+    //           }
+    // }
 
  
     public function changePassword(Request $request){
       try{
-        if($this->user['role'] = 'seller'){
+        if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
           $response=[];
 
         if($request['current_password'] ==''){
@@ -622,7 +723,7 @@ class SellerDashboardController extends Controller
     //graph api
     public function total_products(Request $request){
      try{
-      if($this->user['role'] = 'seller'){
+      if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
         $products = Course::where('seller_id',$this->user['id'])->get();
         $total_products = $products->count();
         $response['total_products'] = $total_products;
@@ -641,7 +742,7 @@ class SellerDashboardController extends Controller
 
     public function products_sold(Request $request){
       try{
-       if($this->user['role'] = 'seller'){
+       if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
          $productsSold = Course::where('seller_id',$this->user['id'])
                     ->join('enrollments', 'enrollments.course_id', '=', 'course.id')
                     ->get();
@@ -662,7 +763,7 @@ class SellerDashboardController extends Controller
 
      public function total_order(Request $request){
       try{
-       if($this->user['role'] = 'seller'){
+       if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
          $orderItem = OrderItems::where('seller_id',$this->user['id'])
                     ->get();
          $order_products = $orderItem->count();
@@ -682,7 +783,7 @@ class SellerDashboardController extends Controller
 
      public function getTotalOrderCountByMonth(Request $request){
       try{
-          if($request->user['role'] == 'seller')
+          if($this->user['role'] == 'seller'|| $this->user['role'] == 'user')
           {
               $users = OrderItems::where('seller_id',$this->user['id'])
                    ->whereBetween('created_at',array($request->start_date,$request->end_date))
@@ -725,7 +826,7 @@ class SellerDashboardController extends Controller
 
   public function todaySales(Request $request){
     try{
-        if($request->user['role'] == 'seller')
+        if($this->user['role'] == 'seller'|| $this->user['role'] == 'user')
         {
                 $today_Order_time=DB::table('order_item')
                   ->where(DB::raw("(DATE_FORMAT(order_item.created_at,'%Y-%m-%d'))"),'=',date('Y-m-d'))
@@ -759,7 +860,7 @@ class SellerDashboardController extends Controller
  // for product page sections
    public function totalSalesOrderAndProfit(Request $request){
     try{
-      if($request->user['role'] == 'seller')
+      if($this->user['role'] == 'seller'|| $this->user['role'] == 'user')
       {
         $newdata=[];
           $sales = OrderItems::where('seller_id',$request->user['id'])
@@ -788,7 +889,7 @@ class SellerDashboardController extends Controller
 
    public function todaySalesProductSection(Request $request){
     try{
-      if($request->user['role'] == 'seller')
+      if($this->user['role'] == 'seller'|| $this->user['role'] == 'user')
       {
         $newdata=[];
           $sales = OrderItems::where('seller_id',$request->user['id'])
@@ -819,7 +920,7 @@ class SellerDashboardController extends Controller
 
    public function totalProductAndProductSold(Request $request){
     try{
-      if($request->user['role'] == 'seller')
+      if($this->user['role'] == 'seller'|| $this->user['role'] == 'user')
         {
           $data = [];
            $product = Course::where('seller_id',$request->user['id'])->get();
