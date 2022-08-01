@@ -377,6 +377,8 @@ Route::post('/user/course_rating_progress_count',
     [RatingReviewController::class,'ratingProgressBar']);
 Route::post('/user/product_detail_rate_page', 
     [UserDashboardController::class,'product_details_rate_page']);
+Route::get('/switch_permission', 
+    [UserDashboardController::class,'switchModule']);
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/

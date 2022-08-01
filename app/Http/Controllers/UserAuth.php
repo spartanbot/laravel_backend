@@ -186,6 +186,7 @@ class UserAuth extends Controller
                 'approved_by_admin' => $approved_by_admin,
                 'createdDate'  => date('H:i:s'),
                 'user_status' => 1,
+                'switch'=> 1,
             ]);
 
             if($user){
@@ -292,6 +293,7 @@ class UserAuth extends Controller
                         'role' => $role,
                         'createdDate'  => date('H:i:s'),
                         'user_status' => 1,
+                        'switch' => 0,
                     ]);
 
                     if($user){
@@ -338,7 +340,7 @@ class UserAuth extends Controller
         if($user_data){
             $pass = Hash::check($request->password, $user_data->password);
             if ($pass) {
-                $token = JWTAuth::claims(['uid'=>$user_data->id,'email'=>$user_data->user_email,'role' => $user_data->role,'user_name' => $user_data->user_name,'full_name' => $user_data->full_name])->attempt($credentials);
+                $token = JWTAuth::claims(['uid'=>$user_data->id,'email'=>$user_data->user_email,'role' => $user_data->role,'user_name' => $user_data->user_name,'full_name' => $user_data->full_name,'switch'=>$user_data->switch])->attempt($credentials);
                 $user = JWTAuth::user();
                 if($token){
                     $data['status']= 201;

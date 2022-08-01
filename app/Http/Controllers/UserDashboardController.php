@@ -226,7 +226,8 @@ public function getAllUserinfo(Request $request){
                 'seller_ref_phonenumber' => $request->seller_ref_phonenumber,
                 'seller_ref_two_name' => $request->seller_ref_two_name,
                 'seller_ref_two_email' => $request->seller_ref_two_email,
-                'seller_ref_two_phonenumber' => $request->seller_ref_two_phonenumber
+                'seller_ref_two_phonenumber' => $request->seller_ref_two_phonenumber,
+                'switch'=> 1,
               ]);
             
             if($update_info){
@@ -455,6 +456,47 @@ public function getAllUserinfo(Request $request){
                   'success'=>true,
                   'response'=>$details
               ],200);
+    }catch(Exception $e){
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+  }
+
+  public function switchModule(Request $request){
+    try{
+      if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
+            $get_data = User::where('id','=',$request->user['id'])
+            ->select('switch','organization')->get()->toArray();
+            $result = [];
+            foreach($get_data as $data){
+               if($data['organization'] == '' || null){
+                     if($data['switch'] == 0 || null  ){
+                          $data['switch'] = false;
+                          $data['message'] = 'Please update seller information on profile';
+                          unset($data['organization']);
+                          array_push($result,$data);
+                        }
+               }else{
+                  if($data['switch'] == 0 || null  ){
+                    $data['switch'] = false;
+                    $data['message'] = 'Please update seller information on profile';
+                    unset($data['organization']);
+                    array_push($result,$data);
+                  }else{
+                    $data['switch'] = true;
+                    unset($data['organization']);
+                    array_push($result,$data);
+                  }
+               }
+            }
+            
+          return response()->json([
+              'success'=>true,
+              'response'=>$result
+          ],200);
+      }
     }catch(Exception $e){
           $error = $e->getMessage();
           $response['status'] = 'error';

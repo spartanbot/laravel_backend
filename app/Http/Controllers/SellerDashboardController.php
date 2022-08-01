@@ -449,7 +449,7 @@ public function sellerOrderDeleteAction(Request $request){
           foreach($all_buyer as $key => $buyer){
            $user = User::where('id','=',$buyer->user_id)
             ->where('verified','=',1)
-            ->select('full_name','user_email','phone','user_profile')
+            ->select('id','full_name','user_email','phone','user_profile')
             ->get();
             foreach($user as $udata){
               $udata->user_profile = asset('/uploads/'.$udata->user_profile);
@@ -523,7 +523,7 @@ public function sellerOrderDeleteAction(Request $request){
                   array_push($data,$order);
                 }
               }
-              if($basic_info && $order){
+              if($basic_info){
                   $response['basic_info'] = $basic_info;
                   $response['orderHistory'] = $data;
                   return response()->json([
