@@ -334,13 +334,14 @@ public function sellerOrderDeleteAction(Request $request){
           $orderd_item = OrderItems::where('order_id','=',$request->order_id)
           ->join('users', 'users.id','=','user_id')
           ->join('course','course.id','=','course_id')
-          ->select('order_id','course_id','user_id','users.full_name','course.course_title','course.course_description','course.course_banner','course.course_fee')
+          ->select('order_id','course_id','user_id','users.full_name','users.user_profile','course.course_title','course.course_description','course.course_banner','course.course_fee')
           ->get();
           $all_orderItems = [];
           $total_price=0;
           foreach($orderd_item as $item){
             $images = explode(",",$item->course_banner);
             $item->course_banner = asset('/uploads/course_banner/'.$images[0]);
+            $item->user_profile = asset('/uploads/'.$item->user_profile);
             $all_orderItems = $item;
             $total_price += $item['course_fee'];
             array_push($all_data,$all_orderItems);
@@ -390,6 +391,7 @@ public function sellerOrderDeleteAction(Request $request){
     public function soldProducts(Request $request){
       try{
         $all_seller_prod = [];
+        $final_data = [];
         if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
         $fetch_products = Course::whereBetween('course.created_at',array($request->start_date,$request->end_date))
         ->where('seller_id','=',$this->user['id'])
@@ -398,14 +400,6 @@ public function sellerOrderDeleteAction(Request $request){
         ->get();
         $products = [];
         foreach($fetch_products as $product){
-           $images = explode(",",$product->course_banner);
-           $products['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
-           $getpoprating = DB::table('ratereview')->where('course_id',$product->id)->get()->avg('rating');
-              if($getpoprating){
-                  $products['product_rating'] = $getpoprating;
-                }else{
-                  $products['product_rating'] = 0;
-                }
             $enrolment_count = DB::table('enrollments')
                  ->select('course_id', DB::raw('count(*) as total'))
                  ->groupBy('course_id')
@@ -418,16 +412,27 @@ public function sellerOrderDeleteAction(Request $request){
                         $products['total_sale'] = $enroled->total;
                         $total_revenue = $product['course_fee'] * $enroled->total;
                         $products['total_revenue'] = $total_revenue;
+                        $images = explode(",",$product->course_banner);
+                        $products['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
+                        $getpoprating = DB::table('ratereview')->where('course_id',$product->id)->get()->avg('rating');
+                            if($getpoprating){
+                                $products['product_rating'] = $getpoprating;
+                              }else{
+                                $products['product_rating'] = 0;
+                              }
                     }
                 }
                 array_push($all_seller_prod,$products);
               }
-              if(sizeof($all_seller_prod)){
+              foreach($all_seller_prod as $seller_products){
+                if(!empty($seller_products)){
+                    array_push($final_data,$seller_products);
+                }
+               }
                 return response()->json([
                     'success'=>true,
                     'response'=>$all_seller_prod
                 ],200);
-              }
             }
       }catch(Exception $e){
                 $error = $e->getMessage();

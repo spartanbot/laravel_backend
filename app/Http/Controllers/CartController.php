@@ -60,7 +60,14 @@ class CartController extends Controller
     public function cartItem(Request $request){
         try{
             if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
-                $cartItem = Cart::where('user_id','=',$this->user['id'])->orderBy('id','desc')->get()->toArray();
+                $cartItem = Cart::where('user_id','=',$this->user['id'])
+                ->join('course','course.id','=','cart.course_id')
+                ->select('cart.*','course.course_banner','course.course_description')
+                ->orderBy('id','desc')->get();
+                foreach($cartItem as $item){
+                    $images = explode(",",$item->course_banner);
+                    $item->course_banner = asset('/uploads/course_banner/'.$images[0]);
+                }
             if($cartItem){
                 return response()->json([
                     'success'=>true,
