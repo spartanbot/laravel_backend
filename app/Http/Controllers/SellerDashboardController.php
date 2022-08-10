@@ -512,8 +512,9 @@ public function sellerOrderDeleteAction(Request $request){
             if($this->user['role'] = 'seller'|| $this->user['role'] == 'user'){
               $response = [];
               $basic_info = User::where('id','=',$request->user_id)
-              ->select('full_name','user_name','user_email','i_am_a')
+              ->select('full_name','user_name','user_email','gender','user_profile')
               ->get();
+              $basic_info[0]->user_profile = asset('/uploads/'.$basic_info[0]->user_profile);
               $orderItem = OrderItems::where('user_id','=',$request->user_id)
               ->select('order_id',DB::raw('COUNT(order_id) as item'))
               ->groupBy('order_id')->get();

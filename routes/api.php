@@ -246,6 +246,8 @@ Route::get('/admin/fetch_all_products',
 [AdminController::class,'fetchAllproduct']);
 Route::get('/admin/single_product', 
 [AdminController::class,'singleProductPage']);
+Route::post('/get_single_product', 
+[AdminController::class,'getSingleProductPage']);
 Route::get('/admin/all_buyer', 
 [AdminController::class,'fetchBuyers']);
 Route::get('/admin/view_profile', 
@@ -379,6 +381,9 @@ Route::post('/user/product_detail_rate_page',
     [UserDashboardController::class,'product_details_rate_page']);
 Route::get('/switch_permission', 
     [UserDashboardController::class,'switchModule']);
+
+Route::post('/user/seller_Store', 
+    [UserDashboardController::class,'seller_Store']);
 /*****************************************************************************************
 *****************************route Payment deatils****************************************
 **********************************************************************************/

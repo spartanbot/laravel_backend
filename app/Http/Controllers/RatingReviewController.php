@@ -21,20 +21,27 @@ class RatingReviewController extends Controller
         }else{
          try{
               if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
-                      $Rating = Ratereview::create([
-                          'user_id' => $request->user['id'],
-                          'course_id' => $request->course_id,
-                          'name'=> $request->user['full_name'],
-                          'description'=> $request->description,
-                          'rating'=> $request->rating,
-                          'title'=> $request->title
-                      ]);
-                      if($Rating){
-                          return response()->json([
-                              'status' => true,
-                              'message' => 'Rating Create successfully!'
-                          ], 200);
-                      }
+                $user_data =Ratereview::where('user_id', '=', $request->user['id'])->where('course_id','=',$request->course_id)->first();
+                if($user_data){
+                    $response['status'] = 'error';
+                    $response['message'] = 'you are already submited your review for this product!';
+                    return response()->json($response, 403);
+                }else{
+                    $Rating = Ratereview::create([
+                        'user_id' => $request->user['id'],
+                        'course_id' => $request->course_id,
+                        'name'=> $request->user['full_name'],
+                        'description'=> $request->description,
+                        'rating'=> $request->rating,
+                        'title'=> $request->title
+                    ]);
+                    if($Rating){
+                        return response()->json([
+                            'status' => true,
+                            'message' => 'Rating Create successfully!'
+                        ], 200);
+                    }
+                }      
               }
               else{
                   $response['status'] = 'error';
@@ -55,6 +62,9 @@ class RatingReviewController extends Controller
             ->select('ratereview.*','users.full_name')
             ->where('ratereview.course_id', '=',$request->course_id)
             ->get();
+            foreach($get_Rating as $rate){
+                $rate->user_profile = asset('/uploads/'.$rate->user_profile);
+            }
              if($get_Rating){
                  return response()->json([
                      'success'=>true,
@@ -79,17 +89,11 @@ class RatingReviewController extends Controller
          if($request->user['role'] == 'seller' || $request->user['role'] == 'user'){
             $Rating = DB::table('ratereview')->where('course_id','=', $request->course_id)
             ->get()->avg('rating');
-                if($Rating){
                 return response()->json([
                     'success'=>true,
                     'response'=>$Rating
                 ],200);
-                }
-                else{
-                    $response['status'] = 'error';
-                    $response['message'] = 'Only User can fetch Rating';
-                    return response()->json($response, 403);
-                }
+        
             }
         }catch(Exception $e){
             return $e;

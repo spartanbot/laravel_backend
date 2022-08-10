@@ -98,7 +98,8 @@ class CourseController extends Controller
                 if($course){
                     return response()->json([
                         'status' => true,
-                        'message' => 'Course created successfully!'
+                        'message' => 'Course created successfully!',
+                        'course_id' => $course->id,
                     ], 200);
                 }
                 
@@ -180,13 +181,26 @@ class CourseController extends Controller
     public function editCourse(Request $request){
         try{
             if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
+            $images = [];
+            $banners = [];
+            $finalBannerImages = [];
             $editCourse = Course::where('id','=',$request->id)
                                   ->where('verify','=',1)
                                   ->get();
                   foreach($editCourse as $course){
+                    $images = explode(",",$course->course_banner);
+                    array_push($banners,$images);
                     $course->subject =  unserialize($course->subject);
                     $course->submission_type =  unserialize($course->submission_type);
-                  }                
+                    $course->course_content = asset('/uploads/'.$course->course_content);
+                  }  
+            foreach($banners as $image){
+                    foreach($image as $key => $img){
+                        $img = asset('/uploads/course_banner/'.$img);
+                        array_push($finalBannerImages,$img);
+                    }
+                }
+              $editCourse[0]->course_banner = $finalBannerImages;              
             // $catdata = DB::table('category')
             // ->select('category_name')
             // ->where('id','=', $editCourse['category_id'])

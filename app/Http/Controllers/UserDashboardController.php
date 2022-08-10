@@ -505,4 +505,35 @@ public function getAllUserinfo(Request $request){
         }
   }
 
+  public function seller_Store(Request $request){
+    try{
+      $fetchallproducts = DB::table('course')->where('seller_id',$request->seller_id)
+      ->join('users','users.id','=','course.seller_id')
+      ->select('course.id','course.course_title','course.course_banner','course.grade_label','course.course_fee','users.full_name as seller_name','users.user_profile','users.location')
+      ->orderBy('id','asc')->get()->toArray();
+      foreach($fetchallproducts as $resourse){
+          $images = explode(",",$resourse->course_banner);
+          $resourse->course_banner = asset('/public/uploads/course_banner/'.$images[0]);
+          $resourse->user_profile = asset('/uploads/'.$resourse->user_profile);
+          $getrating = DB::table('ratereview')->where('course_id',$resourse->id)->get()->avg('rating');
+      if($getrating){
+          $resourse->rating = $getrating;
+      }else{
+          $resourse->rating = 0;
+      }
+      }
+      
+      return response()->json([
+          'success'=>true,
+          'response'=>$fetchallproducts,
+          'product_found'=> count($fetchallproducts)
+      ],200);
+    }catch(Exception $e){
+          $error = $e->getMessage();
+          $response['status'] = 'error';
+          $response['message'] = $error;
+          return response()->json($response, 403);
+        }
+  }
+
 }

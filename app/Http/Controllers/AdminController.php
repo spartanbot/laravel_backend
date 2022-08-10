@@ -188,7 +188,7 @@ class AdminController extends Controller
 
     public function singleProductPage(Request $request){
         try{
-            if($request->user['role'] == 'admin'){
+            if($request->user['role'] == 'admin' || $request->user['role'] == 'seller' || $request->user['role'] == 'user'){
                 $images = [];
             $single_course = DB::table('course')                 
                              ->select('id','course_title','course_description','course_fee','course_banner','course_content')
@@ -210,6 +210,40 @@ class AdminController extends Controller
                 $response['message'] = 'Only Admin can open this course';
                 return response()->json($response, 403);
             }
+        }catch(Exception $e){
+            return $e;
+        }
+    }
+
+    public function getSingleProductPage(Request $request){
+        try{
+            $images = [];
+            $banners = [];
+            $finalBannerImages = [];
+            $single_course = DB::table('course')                 
+                            ->where('course.id','=',$request->id)
+                            ->join('users', 'users.id', '=', 'course.seller_id')
+                            ->select('course.*', 'users.full_name as seller_name')
+                            ->get();
+                    foreach($single_course as $course){
+                                $images = explode(",",$course->course_banner);
+                                array_push($banners,$images);
+                                $course->subject =  unserialize($course->subject);
+                                $course->course_content = asset('/uploads/'.$course->course_content);
+                             }
+                    foreach($banners as $image){
+                        foreach($image as $key => $img){
+                            $img = asset('/uploads/course_banner/'.$img);
+                            array_push($finalBannerImages,$img);
+                        }
+                    }
+                  $single_course[0]->course_banner = $finalBannerImages;
+                if($single_course){
+                    return response()->json([
+                        'success'=>true,
+                        'response'=>$single_course
+                    ],200);
+                }
         }catch(Exception $e){
             return $e;
         }
@@ -335,8 +369,11 @@ class AdminController extends Controller
             if($request->user['role'] == 'admin'){
             $allsellers =  User::where('role','=','seller')
             ->where('verified','=',1)
-            ->select('id','full_name','user_email','created_at')
+            ->select('id','full_name','user_email','created_at','user_profile','phone')
             ->get();
+            foreach($allsellers as $seller){
+                $seller->user_profile = asset('/uploads/'.$seller->user_profile);
+            }
             if($allsellers){
                 return response()->json([
                     'success'=>true,
@@ -387,7 +424,8 @@ class AdminController extends Controller
             //if($request->user['role'] == 'admin'){
             $fetch_products = Course::where('seller_id','=',$request->id)
             ->where('verify','=',1)
-            ->select('id','course_title','course_fee','created_at')
+            ->join('users', 'users.id', '=', 'course.seller_id')
+            ->select('course.id','course.course_title','course.course_fee','course.created_at','course.course_banner','users.full_name as seller_name')
             ->get();
             $products = [];
             foreach($fetch_products as $product){
@@ -395,6 +433,9 @@ class AdminController extends Controller
                 $products['course_title'] = $product['course_title'];
                 $products['course_fee'] = $product['course_fee'];
                 $products['created_at'] = $product['created_at'];
+                $products['seller_name'] = $product['seller_name'];
+                $images = explode(",",$product['course_banner']);
+                $products['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                 $enrolment_count = DB::table('enrollments')
                      ->select('course_id', DB::raw('count(*) as total'))
                      ->groupBy('course_id')
@@ -438,6 +479,9 @@ class AdminController extends Controller
         try{
             if($request->user['role'] == 'admin'){
                 $all_user = User::where('verified','=',1)->get();
+                foreach($all_user as $user){
+                    $user->user_profile = asset('/uploads/'.$user->user_profile);
+                }
                 if(sizeof($all_user)){
                     return response()->json([
                         'success'=>true,
@@ -460,8 +504,11 @@ class AdminController extends Controller
                 $all_unapproved_user = User::where('role','=','seller')
                 ->where('verified','=',1)
                 ->where('approved_by_admin','=',0)
-                ->select('id','full_name','user_name','user_email','created_at')
+                ->select('id','full_name','user_name','user_email','created_at','user_profile','phone')
                 ->get();
+                foreach($all_unapproved_user as $user){
+                    $user->user_profile = asset('/uploads/'.$user->user_profile);
+                }
                 if(sizeof($all_unapproved_user)){
                     return response()->json([
                         'success'=>true,
@@ -499,8 +546,11 @@ class AdminController extends Controller
                 $all_approved_user = User::where('role','=','seller')
                 ->where('verified','=',1)
                 ->where('approved_by_admin','=',1)
-                ->select('id','full_name','user_name','user_email','created_at')
+                ->select('id','full_name','user_name','user_email','created_at','phone','user_profile')
                 ->get();
+                foreach($all_approved_user as $user){
+                    $user->user_profile = asset('/uploads/'.$user->user_profile);
+                }
                 if(sizeof($all_approved_user)){
                     return response()->json([
                         'success'=>true,
@@ -596,12 +646,13 @@ class AdminController extends Controller
                     $fetch_course_user = DB::table('users')->whereBetween('created_at',array($request->start_date,$request->end_date))
                     ->where('id','=',$top_sell['seller_id'])
                     ->where('verified','=',1)
-                    ->select('full_name','user_email','id','created_at','phone')
+                    ->select('full_name','user_email','id','created_at','phone','user_profile')
                     ->get();
                     foreach($fetch_course_user as $user){
                         $top_seller['id'] = $user->id;
                         $top_seller['user_email'] = $user->user_email;
                         $top_seller['full_name'] = $user->full_name;
+                        $top_seller['user_profile'] = asset('/uploads/'.$user->user_profile);
                         $top_seller['phone'] = $user->phone;
                         $top_seller['created_at'] = $user->created_at;
                     }
@@ -676,7 +727,7 @@ class AdminController extends Controller
                     ->join('users', 'users.id', '=', 'course.seller_id')
                     ->where('course.id','=',$top_sell['course_id'])
                     ->where('verify','=',1)
-                    ->select('course_title','course_fee','course.created_at','users.full_name')
+                    ->select('course_title','course_fee','course_banner','course.created_at','users.full_name')
                     ->get();
                     foreach($fetch_course as $key1 =>  $course){
                         $getpoprating = DB::table('ratereview')->where('course_id',$top_sell['course_id'])->get()->avg('rating');
@@ -685,6 +736,8 @@ class AdminController extends Controller
                        }else{
                         $top_sell_product['product_rating'] = 0;
                        } 
+                       $images = explode(",",$course->course_banner);
+                       $top_sell_product['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                         $top_sell_product['course_id'] = $top_sell['course_id'];
                         $top_sell_product['total_sales'] = $top_sell['count'];
                         $top_sell_product['product_title'] = $course->course_title;
