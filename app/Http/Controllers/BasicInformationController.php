@@ -124,7 +124,7 @@ class BasicInformationController extends Controller
           ]);
          return response()->json([
             'error'=>false,
-            'msg'=>"Delete recard successfully!"]);
+            'msg'=>"Cart items deleted successfully"]);
         }catch(Exception $e){
          return "error";
         }

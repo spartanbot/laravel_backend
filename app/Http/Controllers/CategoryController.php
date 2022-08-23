@@ -38,7 +38,7 @@ class CategoryController extends Controller
               if($fetchCatgory){
                 return response()->json([
                     'status' => false,
-                    'message' => 'Category already exist!'
+                    'message' => 'Category already exist'
                  ],403);
               }else{
                 $category  =  Category::create([
@@ -48,7 +48,7 @@ class CategoryController extends Controller
                 if($category){
                     return response()->json([
                         'status' => true,
-                        'message' => 'Category created successfully!'
+                        'message' => 'Category created successfully'
                      ],200);
                 }
               }
@@ -110,7 +110,7 @@ public function updateCategory(Request $request){
           if($UpdateCategory){
             return response()->json([
                 'status'=>true,
-                'success'=>"Category updated successfully!"
+                'success'=>"Category updated successfully"
                ],200);
           }
         } catch (Exception $e) {

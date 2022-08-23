@@ -69,7 +69,7 @@ class CourseController extends Controller
                       if($fetchCourse){
                             return response()->json([
                                 'status' => false,
-                                'message' => 'Course Name already exist!'
+                                'message' => 'Item name already exist'
                              ],403);
                        }else{
                     
@@ -91,14 +91,14 @@ class CourseController extends Controller
                             'verify' => 1,
                     ]);
                     //notification
-                    $message = $this->user['full_name'].' is Added a new product '.$request->course_title;
+                    $message = $this->user['full_name'].' added a new item '.$request->course_title;
                     $navigate = new NavigationController();
                     $navigate->createNotification(null,$this->user['id'],$message,1);
                     
                 if($course){
                     return response()->json([
                         'status' => true,
-                        'message' => 'Course created successfully!',
+                        'message' => 'Resource created successfully',
                         'course_id' => $course->id,
                     ], 200);
                 }
@@ -106,7 +106,7 @@ class CourseController extends Controller
                        }
                 }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'Only seller can create course';
+                    $response['message'] = 'Only seller can create resources';
                     return response()->json($response, 403);
                 }
             }catch (Exception $e) {
@@ -128,12 +128,12 @@ class CourseController extends Controller
                 if($UpdateCourse){
                     return response()->json([
                         'status' => true,
-                        'message' => 'Course content updated successfully!'
+                        'message' => 'Item content updated successfully'
                     ], 200);
                 }
                 }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'Course Content can not empty';
+                    $response['message'] = 'Item content cannot be empty';
                     return response()->json($response, 403);
                 }
             }catch(Exception $e){
@@ -161,13 +161,13 @@ class CourseController extends Controller
             if($UpdateCourse){
                 return response()->json([
                     'status' => true,
-                    'message' => 'Course banner updated successfully!'
+                    'message' => 'Item banner updated successfully'
                 ], 200);
             }
             
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Course Banner can not empty';
+                $response['message'] = 'Item banner cannot be empty';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -220,7 +220,7 @@ class CourseController extends Controller
             }
         }else{
             $response['status'] = 'error';
-            $response['message'] = 'Only seller can edit course';
+            $response['message'] = 'Only seller can edit resource items';
             return response()->json($response, 403);
         }
            }catch(Exception $e){
@@ -241,7 +241,7 @@ class CourseController extends Controller
             }
         }catch(Exception $e){
             $response['status'] = 'error';
-            $response['message'] = 'Somthing went wrong!';
+            $response['message'] = 'Something went wrong';
             return response()->json($response, 500);
          }
     }
@@ -261,12 +261,12 @@ class CourseController extends Controller
             if($removeContent){
                 return response()->json([
                     'status'=>true,
-                    'success'=>"Content remove successfully!"
+                    'success'=>"Content removed successfully"
                    ],200);
             }
         }else{
             $response['status']= 'error';
-            $response['message']= 'File dose not exist!';
+            $response['message']= 'File does not exist';
             return response()->json($response,403);
         }
     }
@@ -275,7 +275,7 @@ class CourseController extends Controller
     
             if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $response = [];
-
+                $images=array();
                 if($request['id'] ==''){
                     $response['id']= 'Please enter course id';
                 }
@@ -317,27 +317,53 @@ class CourseController extends Controller
                     return response()->json($response,403);
                 }else{
                     try{
+                        $sub = json_decode($request->subject);
+                        $submission_type = json_decode($request->submission_type);
                         $UpdateCourse = Course::where('id', $request->id)->update([
                             'course_title' => $request->course_title,
                             'course_description' => $request->course_description,
-                            'subject' => serialize($request->subject),
+                            'subject' => serialize($sub),
                             'category_id' => $request->category_id,
                             'language_id' => $request->language_id,
                             'category' => $request->category,
                             'language' => $request->language,
                             'grade_label' => $request->grade_label,
                             'age_group' => $request->age_group,
+                            'course_banner' => $request->course_banner,
+                            'course_content' => $request->course_content,
                             'course_fee' => $request->course_fee,
                             'affiliation'=> $request->affiliation,
-                            'submission_type' => serialize($request->submission_type),
+                            'submission_type' => serialize($submission_type),
                             'difficulty' => $request->difficulty,
                             'seller_id' => $this->user['id'],
                             'verify' => 1,
                       ]);
+                      if($request->hasFile('course_content')){
+                        $file = $request->file('course_content');
+                        $filename = time().$file->getClientOriginalName();
+                        $path = public_path().'/uploads/';
+                        $file->move($path, $filename);
+                        $UpdateCourse = Course::where('id', $request->id)->update([
+                            'course_content' => $filename, 
+                        ]);
+                       }
+                       if($request->hasFile('course_banner')){
+                        $files = $request->file('course_banner');
+                        foreach($files as $file){
+                            $course_banner = time().$file->getClientOriginalName();
+                            $course_path = public_path().'/uploads/course_banner/';
+                            $file->move($course_path, $course_banner);
+                            array_push($images,$course_banner);
+                            $images[]=$course_banner;
+                        }
+                            $UpdateCourse = Course::where('id', $request->id)->update([
+                                'course_banner' => implode(",",$images), 
+                            ]); 
+                        }
                       if($UpdateCourse){
                         return response()->json([
                             'status'=>true,
-                            'success'=>"Course updated successfully!"
+                            'success'=>"Item updated successfully"
                            ],200);
                       }
                     }catch(Exception $e){
@@ -348,7 +374,7 @@ class CourseController extends Controller
                 }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only seller can edit course';
+                $response['message'] = 'Only seller can edit resource items';
                 return response()->json($response, 403);
             }
     }

@@ -130,7 +130,7 @@ public function deleteUserinfo(Request $request,$id){
           ]);
          return response()->json([
             'error'=>false,
-            'msg'=>"Delete recard successfully!"]);
+            'msg'=>"Delete info successfully!"]);
         }catch(Exception $e){
          return "error";
         }

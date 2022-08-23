@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateTestimonal extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -17,12 +17,12 @@ class CreateTestimonal extends Migration
         {
             Schema::create('testimonal', function (Blueprint $table) {
                 $table->id();
-                $table->char('title',255);
-                $table->char('grade', 255);
-                $table->char('school', 255);
-                $table->char('location', 255);
-                $table->longText('description');
-                $table->char('image', 255);
+                $table->string('title');
+                $table->string('grade');
+                $table->string('school');
+                $table->string('location');
+                $table->text('description');
+                $table->string('image');
                 $table->timestamps();
             });
         }
@@ -37,4 +37,4 @@ class CreateTestimonal extends Migration
     {
         Schema::dropIfExists('testimonal');
     }
-}
+};

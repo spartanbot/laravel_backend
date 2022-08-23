@@ -29,7 +29,7 @@ class UserAuth extends Controller
     public function sendEmail($email,$user_id,$token) 
 
   {
-      $title = '[Confirmation] Thank you for your register';
+      $title = 'Thank you for registering';
       $user_id = ['uid'=>$user_id];
       $details = [ 'token' => $token];
        $sendmail = Mail::to($email)->send(new SendMailreset($title, $user_id, $details));
@@ -139,7 +139,7 @@ class UserAuth extends Controller
                 
                 $data['status']= 'error';
                 $data['error']= 403;
-                $data['result']= 'Already register with this Email';
+                $data['result']= 'This email is already registered';
                 return response()->json($data);
              }else{
 
@@ -192,7 +192,7 @@ class UserAuth extends Controller
             if($user){
                 $this->sendEmail($request->user_email,$user->id,$user->token);
               $data['status']= 201;
-              $data['success']= 'User successfully register Please check for verified email!';
+              $data['success']= 'Registration succcessful! Please verify your email by clicking on the link from your email provider';
               $data['user']= $user;
               return response()->json($data);
 
@@ -269,7 +269,7 @@ class UserAuth extends Controller
                 if($get_result){
                     $data['status']= 'error';
                     $data['error']= 403;
-                    $data['result']= 'Already register with this Email';
+                    $data['result']= 'This email is already registered';
                     return response()->json($data);
                  }else{
                     $random_number = rand(10,100000);
@@ -299,7 +299,7 @@ class UserAuth extends Controller
                     if($user){
                         $this->sendEmail($request->user_email,$user->id,$user->token);
                       $data['status']= 201;
-                      $data['success']= 'User successfully register Please check for verified email!';
+                      $data['success']= 'Registration succcessful! Please verify your email by clicking on the link from your email provider';
                       $data['user']= $user;
                       return response()->json($data);
         
@@ -367,7 +367,7 @@ class UserAuth extends Controller
         }else{
             $data['status']= 'error';
             $data['error']= 400;
-            $data['result']='Sorry your email cannot be verified or email not valid!';
+            $data['result']='Sorry, your email cannot be verified or email is not valid';
             return response()->json($data);
          }
       }
@@ -380,7 +380,7 @@ class UserAuth extends Controller
  
             return response()->json([
                 'success' => true,
-                'message' => 'User has been logged out'
+                'message' => 'Logged out succcessfully'
             ]);
         } catch (JWTException $exception) {
             return response()->json([
@@ -465,7 +465,7 @@ class UserAuth extends Controller
          });
          return response()->json([
                 'success' => true,
-                'message' => 'mail send seccussfully!.'
+                'message' => 'Mail sent successfully.'
             ]);
         }else{
           return ['error'=>false,'exist'=>false];
@@ -509,7 +509,7 @@ class UserAuth extends Controller
         'password' =>Hash::make($request->password)
         ]);
 
-        return response()->json(['error'=>false,'msg'=>"password reset successfully!"]);
+        return response()->json(['error'=>false,'msg'=>"Password reset successful"]);
 
       }else{
         return response()->json(['error'=>true,'msg'=>"some thing went wrong!"]);
@@ -631,7 +631,7 @@ class UserAuth extends Controller
         'password' => Hash::make($request->password)
         ]);
         $data['status']= 200;
-        $data['success']= "password reset successfully!";
+        $data['success']= "Password reset successful";
         return response()->json($data,200);
 
         }else{
@@ -662,7 +662,7 @@ class UserAuth extends Controller
                 if($users_update){
                     return response()->json([
                         'success' => true,
-                        'message' => 'profile is updated!.'
+                        'message' => 'Profile updated successfully'
                     ],200);
                 }
             }

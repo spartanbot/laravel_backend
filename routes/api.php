@@ -45,6 +45,16 @@ Route::get('/all_testimonial',
 [FrontendController::class,'fetchAllTestimonial']);
 Route::post('/contact_us', [FrontendController::class, 'contactUs']);
 Route::post('/frontend_search', [FrontendController::class, 'globalSearch']);
+Route::post('/get_single_product', 
+[FrontendController::class,'getSingleProductPage']);
+Route::post('/user/course_rating_average', 
+    [FrontendController::class,'course_rating_avg']);
+Route::post('/user/course_rating_progress_count', 
+    [FrontendController::class,'ratingProgressBar']);
+Route::post('/user/course_total_rate_review', 
+    [FrontendController::class,'totalRating']);
+Route::post('/user/get_course_Rating_Review', 
+    [FrontendController::class,'get_course_Rating_Review']);
  /******************************************************************************
  ****************************************route subscribe and visitor info related************
  *********************************************************************************
@@ -246,8 +256,6 @@ Route::get('/admin/fetch_all_products',
 [AdminController::class,'fetchAllproduct']);
 Route::get('/admin/single_product', 
 [AdminController::class,'singleProductPage']);
-Route::post('/get_single_product', 
-[AdminController::class,'getSingleProductPage']);
 Route::get('/admin/all_buyer', 
 [AdminController::class,'fetchBuyers']);
 Route::get('/admin/view_profile', 
@@ -369,14 +377,6 @@ Route::get('/user/user_succeeded_order',
     [UserDashboardController::class,'statusPaidOrders']);
 Route::post('/user/add_rate_review', 
     [RatingReviewController::class,'create_Rating']);
-Route::post('/user/get_course_Rating_Review', 
-    [RatingReviewController::class,'get_course_Rating_Review']);
-Route::post('/user/course_rating_average', 
-    [RatingReviewController::class,'course_rating_avg']);
-Route::post('/user/course_total_rate_review', 
-    [RatingReviewController::class,'totalRating']);
-Route::post('/user/course_rating_progress_count', 
-    [RatingReviewController::class,'ratingProgressBar']);
 Route::post('/user/product_detail_rate_page', 
     [UserDashboardController::class,'product_details_rate_page']);
 Route::get('/switch_permission', 

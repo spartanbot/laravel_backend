@@ -13,7 +13,7 @@ class SubscribeController extends Controller
             $user_data =Subscribe::where('user_email', '=', $request->user_email)->first();
             if($user_data){
                 $response['status'] = 'error';
-                $response['message'] = 'Email alreay Used!';
+                $response['message'] = 'Email already exists';
                 return response()->json($response, 403);
             }else{
                 $subscribe = Subscribe::create([

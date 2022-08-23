@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateSubscribe extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -13,10 +13,12 @@ class CreateSubscribe extends Migration
      */
     public function up()
     {
-        if(!Schema::hasTable('subscribe')){
-            Schema::create('subscribe', function (Blueprint $table) {
+        if(!Schema::hasTable('category'))
+        {
+            Schema::create('category', function (Blueprint $table) {
                 $table->id();
-                $table->string('user_email')->unique();
+                $table->string('category_name');
+                $table->text('description');
                 $table->timestamps();
             });
         }
@@ -29,6 +31,6 @@ class CreateSubscribe extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('subscribe');
+        Schema::dropIfExists('category');
     }
-}
+};

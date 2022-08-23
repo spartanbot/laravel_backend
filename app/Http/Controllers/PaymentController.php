@@ -66,7 +66,7 @@ class PaymentController extends Controller
             $paymentdetail->save();
             return response()->json([
                 'status' => true,
-                'message' => 'payment created successfully!'
+                'message' => 'Payment method created successfully'
               
              ],201);
          }
@@ -130,7 +130,7 @@ class PaymentController extends Controller
               ]);
             return response()->json([
             'error'=>false,
-            'msg'=>"Payment updated successfully!"
+            'msg'=>"Payment method updated successfully"
            ]);
 
          }
@@ -161,7 +161,7 @@ class PaymentController extends Controller
           ]);
          return response()->json([
             'error'=>false,
-            'msg'=>"Delete recard successfully!"]);
+            'msg'=>"Delete successfully!"]);
         }catch(Exception $e){
          return "error";
         }

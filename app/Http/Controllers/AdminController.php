@@ -36,7 +36,7 @@ class AdminController extends Controller
                 ],200);
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can access!';
+                $response['message'] = 'Accessible only by admin';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -77,7 +77,7 @@ class AdminController extends Controller
                 ],200);
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can access!';
+                $response['message'] = 'Accessible only by admin';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -104,6 +104,10 @@ class AdminController extends Controller
                     $orderdata['fullname'] = $order->fullname;
                     $orderdata['created_at'] = $order->created_at;
                     $orderdata['total'];
+                    $get_user_image = User::where('id',$order->user_id)->select('user_profile')->get();
+                    foreach($get_user_image as $image){
+                        $orderdata['user_profile'] = asset('/uploads/'.$image->user_profile);
+                    }
                     // fetch orderItems 
                     $orderdata['orderItems']=[];
                     $fetchOrderItem = DB::table('order_item')
@@ -128,7 +132,7 @@ class AdminController extends Controller
 
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can use Fetch All Order';
+                $response['message'] = 'Only admin can fetch all orders';
                 return response()->json($response, 403);
             }
             
@@ -172,7 +176,7 @@ class AdminController extends Controller
                 ],200);
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can use Fetch All Order';
+                $response['message'] = 'Only admin can fetch all orders';
                 return response()->json($response, 403);
             }
             
@@ -188,7 +192,6 @@ class AdminController extends Controller
 
     public function singleProductPage(Request $request){
         try{
-            if($request->user['role'] == 'admin' || $request->user['role'] == 'seller' || $request->user['role'] == 'user'){
                 $images = [];
             $single_course = DB::table('course')                 
                              ->select('id','course_title','course_description','course_fee','course_banner','course_content')
@@ -205,57 +208,55 @@ class AdminController extends Controller
                         'response'=>$single_course
                     ],200);
                 }
-            }else{
-                $response['status'] = 'error';
-                $response['message'] = 'Only Admin can open this course';
-                return response()->json($response, 403);
-            }
         }catch(Exception $e){
             return $e;
         }
     }
 
-    public function getSingleProductPage(Request $request){
-        try{
-            $images = [];
-            $banners = [];
-            $finalBannerImages = [];
-            $single_course = DB::table('course')                 
-                            ->where('course.id','=',$request->id)
-                            ->join('users', 'users.id', '=', 'course.seller_id')
-                            ->select('course.*', 'users.full_name as seller_name')
-                            ->get();
-                    foreach($single_course as $course){
-                                $images = explode(",",$course->course_banner);
-                                array_push($banners,$images);
-                                $course->subject =  unserialize($course->subject);
-                                $course->course_content = asset('/uploads/'.$course->course_content);
-                             }
-                    foreach($banners as $image){
-                        foreach($image as $key => $img){
-                            $img = asset('/uploads/course_banner/'.$img);
-                            array_push($finalBannerImages,$img);
-                        }
-                    }
-                  $single_course[0]->course_banner = $finalBannerImages;
-                if($single_course){
-                    return response()->json([
-                        'success'=>true,
-                        'response'=>$single_course
-                    ],200);
-                }
-        }catch(Exception $e){
-            return $e;
-        }
-    }
+    // public function getSingleProductPage(Request $request){
+    //     try{
+    //         $images = [];
+    //         $banners = [];
+    //         $finalBannerImages = [];
+    //         $single_course = DB::table('course')                 
+    //                         ->where('course.id','=',$request->id)
+    //                         ->join('users', 'users.id', '=', 'course.seller_id')
+    //                         ->select('course.*', 'users.full_name as seller_name')
+    //                         ->get();
+    //                 foreach($single_course as $course){
+    //                             $images = explode(",",$course->course_banner);
+    //                             array_push($banners,$images);
+    //                             $course->subject =  unserialize($course->subject);
+    //                             $course->course_content = asset('/uploads/'.$course->course_content);
+    //                          }
+    //                 foreach($banners as $image){
+    //                     foreach($image as $key => $img){
+    //                         $img = asset('/uploads/course_banner/'.$img);
+    //                         array_push($finalBannerImages,$img);
+    //                     }
+    //                 }
+    //               $single_course[0]->course_banner = $finalBannerImages;
+    //             if($single_course){
+    //                 return response()->json([
+    //                     'success'=>true,
+    //                     'response'=>$single_course
+    //                 ],200);
+    //             }
+    //     }catch(Exception $e){
+    //         return $e;
+    //     }
+    // }
 
     public function fetchBuyers(Request $request){
         try{
             if($request->user['role'] == 'admin'){
             $allBuyer =  User::where('role','=','user')
             ->where('verified','=',1)
-            ->select('id','full_name','user_email','created_at')
+            ->select('id','full_name','user_email','created_at','phone','user_profile')
             ->get();
+            foreach($allBuyer as $buyer){
+                $buyer->user_profile = asset('/uploads/'.$buyer->user_profile);
+            }
             if($allBuyer){
                 return response()->json([
                     'success'=>true,
@@ -264,7 +265,7 @@ class AdminController extends Controller
             }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can fetch all buyers';
+                $response['message'] = 'Only admin can fetch all buyers data';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -301,12 +302,18 @@ class AdminController extends Controller
             if($request->user['role'] == 'admin'){
                 $response = [];
             $basic_info = User::where('id','=',$request->id)
-            ->select('full_name','user_name','user_email','i_am_a')
+            ->select('full_name','user_name','user_email','gender','user_profile')
             ->get();
-        
+            foreach($basic_info as $info){
+                $info->user_profile = asset('/uploads/'.$info->user_profile);
+            }
             $order = Order::where('user_id','=',$request->id)
             ->select('id','created_at','status','total')
             ->get();
+            foreach($order as $ordr){
+                $items = OrderItems::where('order_id',$ordr->id)->select('id')->get();
+                $ordr->qty = count($items);
+             }
             if($basic_info && $order){
                 $response['basic_info'] = $basic_info;
                 $response['orderHistory'] = $order;
@@ -342,13 +349,15 @@ class AdminController extends Controller
                 $orderItems['created_at'] = $item['created_at'];
                 $orderItems['status'] = $order[0]['status'];
                 $orderItems['transaction_id'] = $order[0]['transaction_id'];
-                 $fetch_course_data = Course::where('id','=',$item['course_id'])
-                 ->select('course_banner','course_title','course_description')
-                 ->get()->toArray();
+                $fetch_course_data = Course::where('course.id','=',$item['course_id'])
+                ->join('users', 'users.id', '=', 'course.seller_id')
+                ->select('course.course_banner','course.course_title','course.course_description','users.full_name as seller_name')
+                ->get()->toArray();
                  $images = explode(",",$fetch_course_data[0]['course_banner']);
                  $orderItems['course_banner'] = asset('/uploads/course_banner/'.$images[0]);
                  $orderItems['course_title'] = $fetch_course_data[0]['course_title'];
                  $orderItems['course_description'] = $fetch_course_data[0]['course_description'];
+                 $orderItems['seller_name'] = $fetch_course_data[0]['seller_name'];
                  $total_price += $item['course_fee'];
                  $all_order_items['total_price'] = $total_price;
                  array_push($all_order_items,$orderItems);
@@ -382,7 +391,7 @@ class AdminController extends Controller
             }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can fetch all buyers';
+                $response['message'] = 'Only admin can fetch all buyers data';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -490,7 +499,7 @@ class AdminController extends Controller
                 }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only Admin can see all users';
+                $response['message'] = 'Only admin can see all users';
                 return response()->json($response, 403);
             }
         }catch(Exception $e){
@@ -572,7 +581,7 @@ class AdminController extends Controller
                 if($Update_unapproved_qry){
                     return response()->json([
                         'success'=>true,
-                        'response'=>"Seller is unapproved successfully"
+                        'response'=>"Seller unapproved successfully"
                     ],200);
                 }
             }
@@ -729,7 +738,7 @@ class AdminController extends Controller
                     ->where('verify','=',1)
                     ->select('course_title','course_fee','course_banner','course.created_at','users.full_name')
                     ->get();
-                    foreach($fetch_course as $key1 =>  $course){
+                    foreach($fetch_course as $course){
                         $getpoprating = DB::table('ratereview')->where('course_id',$top_sell['course_id'])->get()->avg('rating');
                       if($getpoprating){
                         $top_sell_product['product_rating'] = $getpoprating;
@@ -783,7 +792,7 @@ class AdminController extends Controller
             }else{
                 $data['status']= 'error';
                 $data['error']= 400;
-                $data['result']='only admin can access!';
+                $data['result']='Accessible only by admin';
                 return response()->json($data);
             }
         }
@@ -814,7 +823,7 @@ class AdminController extends Controller
             }else{
                 $data['status']= 'error';
                 $data['error']= 400;
-                $data['result']='only admin can access!';
+                $data['result']='Accessible only by admin';
                 return response()->json($data);
             }
             
@@ -843,7 +852,7 @@ class AdminController extends Controller
             }else{
                 $data['status'] = 'error';
                 $data['error'] = 400;
-                $data['result'] ='only admin can access!';
+                $data['result'] ='Accessible only by admin';
                 return response()->json($data);
             }
         }
@@ -945,7 +954,7 @@ class AdminController extends Controller
             if($delete){
                 return response()->json([
                     'success'=>true,
-                    'response'=> 'User deleted !'
+                    'response'=> 'User deleted'
                 ],200);
             }
         }catch(Exception $e){
@@ -966,7 +975,7 @@ class AdminController extends Controller
                     if($order){
                         return response()->json([
                             'success'=>true,
-                            'response'=> 'Order deleted !'
+                            'response'=> 'Order deleted'
                         ],200);
                     }
                 }else{
@@ -974,7 +983,7 @@ class AdminController extends Controller
                     if($orderstatus){
                         return response()->json([
                             'success'=>true,
-                            'response'=> 'Order deleted !'
+                            'response'=> 'Order deleted'
                         ],200);
                     }
                 }
@@ -997,7 +1006,7 @@ class AdminController extends Controller
                 if($product){
                     return response()->json([
                         'success'=>true,
-                        'response'=> 'Product deleted !'
+                        'response'=> 'Product deleted'
                     ],200);
                 }
             }
@@ -1017,7 +1026,7 @@ class AdminController extends Controller
                 if($category){
                     return response()->json([
                         'success'=>true,
-                        'response'=> 'Category deleted !'
+                        'response'=> 'Category deleted'
                     ],200);
                 }
             }
@@ -1037,7 +1046,7 @@ class AdminController extends Controller
                 if($testimonal){
                     return response()->json([
                         'success'=>true,
-                        'response'=> 'Testimonal deleted !'
+                        'response'=> 'Testimonial deleted'
                     ],200);
                 }
             }

@@ -94,7 +94,7 @@ class SellerDashboardController extends Controller
               $selleraccount = SellerAccounts::where('user_id','=',$this->user['id'])->get();
               if(sizeof($selleraccount)){
                 $response['status'] = 'error';
-                $response['message'] = 'You Have already account on stripe. Please contact your Admin ';
+                $response['message'] = 'You already have an account on Stripe. Please contact admin for support ';
                 return response()->json($response, 403);
 
               }else{
@@ -216,7 +216,7 @@ public function sellerOrderDeleteAction(Request $request){
               if($order){
                   return response()->json([
                       'success'=>true,
-                      'response'=> 'Order deleted !'
+                      'response'=> 'Order deleted'
                   ],200);
               }
           }else{
@@ -224,7 +224,7 @@ public function sellerOrderDeleteAction(Request $request){
               if($orderstatus){
                   return response()->json([
                       'success'=>true,
-                      'response'=> 'Order deleted !'
+                      'response'=> 'Order deleted'
                   ],200);
               }
           }
@@ -431,7 +431,7 @@ public function sellerOrderDeleteAction(Request $request){
                }
                 return response()->json([
                     'success'=>true,
-                    'response'=>$all_seller_prod
+                    'response'=>$final_data
                 ],200);
             }
       }catch(Exception $e){
@@ -471,7 +471,7 @@ public function sellerOrderDeleteAction(Request $request){
         }else{
           return response()->json([
             'success'=>true,
-            'response'=>'User Not found'
+            'response'=>'User not found'
           ],403);
         }
       }catch(Exception $e){
@@ -702,7 +702,7 @@ public function sellerOrderDeleteAction(Request $request){
                   ]);
                   if($update_password){
                           $data['status']= 'success';
-                          $data['result']='Successfull change Password, Please Login with new password';
+                          $data['result']='Password changed successfully. Please login with new password.';
                         return response()->json($data,200);
                   }else{
                     $data['status']= 'error';
@@ -847,7 +847,7 @@ public function sellerOrderDeleteAction(Request $request){
                     if(empty($newdata)){
                       return response()->json([
                         'success'=>true,
-                        'response'=> 'No oreder found !'
+                        'response'=> 'No order found'
                        ],200);
                     }else{
                       return response()->json([

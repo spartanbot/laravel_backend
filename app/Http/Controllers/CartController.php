@@ -43,13 +43,13 @@ class CartController extends Controller
                     if($cartItem){
                         return response()->json([
                             'status' => true,
-                            'message' => 'Cart added successfully!'
+                            'message' => 'Item added to cart successfully'
                         ], 200);
                     }
                 }
             }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'Only seller, User can use cart';
+                    $response['message'] = 'Only seller and buyer can use cart';
                     return response()->json($response, 403);
             }
         }catch (Exception $e) {
@@ -61,8 +61,8 @@ class CartController extends Controller
         try{
             if($this->user['role'] == 'seller' || $this->user['role'] == 'user'){
                 $cartItem = Cart::where('user_id','=',$this->user['id'])
-                ->join('course','course.id','=','cart.course_id')
-                ->select('cart.*','course.course_banner','course.course_description')
+                ->join('users','users.id','=','cart.seller_id')
+                ->select('cart.*','course.course_banner','course.course_description','users.full_name as seller_name')
                 ->orderBy('id','desc')->get();
                 foreach($cartItem as $item){
                     $images = explode(",",$item->course_banner);
@@ -76,7 +76,7 @@ class CartController extends Controller
             }
             }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'Only seller, User can use fetch cart item';
+                    $response['message'] = 'Only seller and buyer can fetch cart items';
                     return response()->json($response, 403);
             }
         }catch (Exception $e) {
@@ -153,7 +153,7 @@ class CartController extends Controller
                                             $this->clearCartAfterCheckout();
                                                 return response()->json([
                                                         'success'=>true,
-                                                        'message'=>'Successfully enroll in this course!'
+                                                        'message'=>'Items purchased successfully'
                                                         ],200);
                                         }
                                 }else{
@@ -189,7 +189,7 @@ class CartController extends Controller
                 }
             }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'Only seller, User can use cart';
+                    $response['message'] = 'Only seller and buyer can use cart';
                     return response()->json($response, 403);
             }
         }catch (Exception $e) {
@@ -238,7 +238,7 @@ class CartController extends Controller
                                 $ItemData['transaction'] = $transactionSave;
                             }else{
                                 $response['status'] = 'error';
-                                $response['message'] = "Can't insert transections items";
+                                $response['message'] = "Can't insert transactional items";
                                 return response()->json($response, 403);
                             }
                     }else{
@@ -250,12 +250,12 @@ class CartController extends Controller
                     $ItemData['enrolments'] = $enrollments;
                 }else{
                     $response['status'] = 'error';
-                    $response['message'] = "Can't enrole on this item";
+                    $response['message'] = "Cannot purchase this item";
                     return response()->json($response, 403);
                 }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = "Can't created order items";
+                $response['message'] = "cannot create order";
                 return response()->json($response, 403);
             }
         }

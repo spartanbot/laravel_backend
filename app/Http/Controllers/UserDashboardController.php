@@ -127,7 +127,7 @@ public function deleteUserinfo(Request $request,$id){
           ]);
          return response()->json([
             'error'=>false,
-            'msg'=>"Delete recard successfully!"]);
+            'msg'=>"Delete info successfully!"]);
         }catch(Exception $e){
          return "error";
         }
@@ -300,7 +300,7 @@ public function getAllUserinfo(Request $request){
                       ]);
                       if($update_password){
                               $data['status']= 'success';
-                              $data['result']='Successfull change Password, Please Login with new password';
+                              $data['result']='Password changed successfully. Please login with new password.';
                             return response()->json($data,200);
                       }else{
                         $data['status']= 'error';
@@ -351,7 +351,7 @@ public function getAllUserinfo(Request $request){
                   }
               }else{
                   $response['status'] = 'error';
-                  $response['message'] = 'Only User can use Fetch All Order';
+                  $response['message'] = 'Only user can fetch all order data';
                   return response()->json($response, 403);
               }
           }catch(Exception $e) {
@@ -388,7 +388,7 @@ public function getAllUserinfo(Request $request){
               }
           }else{
               $response['status'] = 'error';
-              $response['message'] = 'Only User can use Fetch All Order';
+              $response['message'] = 'Only user can fetch all order data';
               return response()->json($response, 403);
           }
       }catch(Exception $e) {
@@ -427,7 +427,7 @@ public function getAllUserinfo(Request $request){
                 }
             }else{
                 $response['status'] = 'error';
-                $response['message'] = 'Only User can use Fetch All Order';
+                $response['message'] = 'Only user can fetch all order data';
                 return response()->json($response, 403);
             }
         }catch(Exception $e) {

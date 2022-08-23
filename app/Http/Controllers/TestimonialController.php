@@ -49,7 +49,7 @@ class TestimonialController extends Controller
               if($fetchtestimonial){
                 return response()->json([
                     'status' => false,
-                    'message' => 'testimonial already exist!'
+                    'message' => 'Testimonial already exist'
                  ],403);
               }else{
                 if($request->hasFile('image')){
@@ -59,7 +59,7 @@ class TestimonialController extends Controller
                         $file->move($path, $filename);
                 }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'testimonial image can not empty';
+                    $response['message'] = 'Please upload testimonial image';
                     return response()->json($response, 403);
                 }
                 $testimonial  =  Testimonal::create([
@@ -73,7 +73,7 @@ class TestimonialController extends Controller
                 if($testimonial){
                     return response()->json([
                         'status' => true,
-                        'message' => 'testimonial created successfully!'
+                        'message' => 'Tesitmonial submitted successfully'
                      ],200);
                 }
               }
@@ -183,7 +183,7 @@ class TestimonialController extends Controller
                         $file->move($path, $filename);
                 }else{
                     $response['status'] = 'error';
-                    $response['message'] = 'testimonial image can not empty';
+                    $response['message'] = 'Please upload testimonial image';
                     return response()->json($response, 403);
                 }
                 $updated = Testimonal::where('id', $request->id)->update(['image' => $filename]);

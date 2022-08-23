@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateVisitorTable extends Migration
+return new class extends Migration
 {
     /**
      * Run the migrations.
@@ -13,14 +13,14 @@ class CreateVisitorTable extends Migration
      */
     public function up()
     {
-        if(!Schema::hasTable('visitor')){
-        Schema::create('visitor', function (Blueprint $table) {
-            $table->id();
-            $table->string('ip');
-            $table->string('browser_info');
-            $table->timestamps();
-        });
-     }
+        if(!Schema::hasTable('language'))
+        {
+            Schema::create('language', function (Blueprint $table) {
+                $table->id();
+                $table->string('language_name');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
@@ -30,6 +30,6 @@ class CreateVisitorTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('visitor');
+        Schema::dropIfExists('language');
     }
-}
+};
