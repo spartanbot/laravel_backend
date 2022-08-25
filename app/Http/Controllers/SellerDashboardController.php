@@ -396,7 +396,7 @@ public function sellerOrderDeleteAction(Request $request){
         $fetch_products = Course::whereBetween('course.created_at',array($request->start_date,$request->end_date))
         ->where('seller_id','=',$this->user['id'])
         ->where('verify','=',1)
-        ->select('id','course_title','course_fee','course_banner')
+        ->select('id','course_title','course_fee','course_banner','subject','category','created_at')
         ->get();
         $products = [];
         foreach($fetch_products as $product){
@@ -408,6 +408,9 @@ public function sellerOrderDeleteAction(Request $request){
                     if($product['id'] == $enroled->course_id){
                         $products['id'] = $product['id'];
                         $products['course_title'] = $product['course_title'];
+                        $products['subject'] = $product['subject'];
+                        $products['category'] = $product['category'];
+                        $products['created_at'] = $product['created_at'];
                         $products['course_fee'] = $product['course_fee'];
                         $products['total_sale'] = $enroled->total;
                         $total_revenue = $product['course_fee'] * $enroled->total;
